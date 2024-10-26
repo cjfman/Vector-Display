@@ -90,8 +90,8 @@ void runOnce(void) {
     }
 
     // Parse command
-    Command cmd;
-    errcode = cmdParse(&cmd, cmd_buf, CMD_BUF_SIZE);
+    Command* cmd;
+    errcode = cmdParse(cmd, cmd_buf, CMD_BUF_SIZE);
     if (errcode) {
         printErrorCode(errcode);
         printPrompt();
