@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "command_parser.h"
+#include "ring_mem_pool.h"
 
 // cmd prefixes
 const char* cmd_set[Cmd_Num] = {
@@ -20,6 +21,7 @@ void clearCache(void) {
     cmd_buf_len = 0;
 }
 
+// And a command to the buffer
 int buildCmd(char* new_cmd, int len) {
     // Check size
     if (len + cmd_buf_len > CMD_BUF_SIZE - 1) {
@@ -41,6 +43,7 @@ int lookForChar(char c) {
     return -1;
 }
 
+// Shift the buffer pointer
 void shiftBuf(int len) {
     // Don't do anything if the shift amount is too much
     if (len > cmd_buf_len) return;
@@ -53,6 +56,7 @@ void shiftBuf(int len) {
 
 }
 
+// Trim line ends
 int trimCrlf(void) {
     if (cmd_buf_len == 0) return 0;
 
@@ -74,6 +78,7 @@ int trimCrlf(void) {
     return shift_len;
 }
 
+// Find the end of the next command
 int crlfPos(void) {
     if (!cmd_buf_len) return 0;
 
@@ -93,6 +98,7 @@ int crlfPos(void) {
     return (cr_pos < lf_pos) ? cr_pos : lf_pos;
 }
 
+// The size of the command
 int commandSize(void) {
     int pos = crlfPos();
     return (pos != -1) ? pos : 0;
@@ -112,9 +118,13 @@ int cmdBufLen(void) {
     return cmd_buf_len;
 }
 
+// Get a command string from the command cache
+// and copy it into the buffer
 int getCmd(char* buf, int buf_len) {
+	// Check for a complete command
     if (crlfPos() == -1) return 0;
 
+	// Get the command string
     int cmd_len = commandSize();
     if (cmd_len == 0) {
         // This was a noop command
@@ -135,6 +145,7 @@ int getCmd(char* buf, int buf_len) {
     return 0;
 }
 
+// Decode a scale command
 int cmdDecodeScale(ScaleCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
@@ -145,6 +156,7 @@ int cmdDecodeScale(ScaleCmd* cmd) {
 	return CMD_OK;
 }
 
+// Decode a point command
 int cmdDecodePoint(PointCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
@@ -152,6 +164,7 @@ int cmdDecodePoint(PointCmd* cmd) {
 	cmd->y = atoi(base->args[1]);
 }
 
+// Decode a line command
 int cmdDecodeLine(LineCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 5) return CMD_ERR_WRONG_NUM_ARGS;
@@ -162,15 +175,28 @@ int cmdDecodeLine(LineCmd* cmd) {
 	cmd->ms = atoi(base->args[4]);
 }
 
-int cmdParse(Command* cmd, char* buf, int len) {
-    // Loop over cmd string, find first ':' and each '&'
+// Parse a command line
+int cmdParse(RingMemPool* cmd_pool, char* buf, int len) {
+	// Get a new command
+	Command* cmd = ring_get(cmd_pool, sizeof(Command));
+	if (!cmd) return CMD_ERROR_OTHER;
+
+
+	// Command arguments are space separated
     int count = 0;
-    int i;
-    char sep = ':';
-    for (i = 0; i < len; i++) {
-        if (buf[i] == sep) {
-            if (!count) sep = '&';
+	char* cmd_start = buf;
+    for (int i = 0; i < len; i++) {
+        if (buf[i] == ' ') {
+			// Trim off leading spaces
+			if (count == 0) {
+				cmd_start += 1;
+				continue;
+			}
+
+			// Safety check
             if (count == CMD_MAX_NUM_ARGS) return CMD_ERR_TOO_MANY_ARGS;
+
+			// Reached the end of an argument
             buf[i] = '\0'; // Replace with null char
             // Pointer to argument
             cmd->args[count++] = &buf[++i];
@@ -178,22 +204,27 @@ int cmdParse(Command* cmd, char* buf, int len) {
     }
     if (!count) return CMD_ERR_WRONG_NUM_ARGS;
 
-    buf[i] == '\0'; // Mark end of last arg
-    cmd->buf = buf;
+    buf[i] = '\0'; // Mark end of last arg
+    cmd->buf = cmd_start;
     cmd->numargs = count;
 
     // Get cmd type
+	int (*decode_fn)(Command* cmd) = NULL;
+	int cmd_size = 0;
     if (strcmp(cmd_set[Cmd_Scale], buf) == 0) {
         cmd->type = Cmd_Scale;
-		cmdDecodeScale(cmd);
+		decode_fn = cmdDecodeScale;
+		cmd_size  = sizeof(ScaleCmd);
     }
 	else if (strcmp(cmd_set[Cmd_Point], buf) == 0) {
         cmd->type = Cmd_Point;
-		cmdDecodePoint(cmd);
+		decode_fn = cmdDecodePoint;
+		cmd_size  = sizeof(PointCmd);
     }
 	else if (strcmp(cmd_set[Cmd_Line], buf) == 0) {
         cmd->type = Cmd_Line;
-		cmdDecodeLine(cmd);
+		decode_fn = cmdDecodeLine;
+		cmd_size  = sizeof(LineCmd);
     }
 	else if (strcmp(cmd_set[Cmd_Noop], buf) == 0) {
         cmd->type = Cmd_Noop;
@@ -202,7 +233,17 @@ int cmdParse(Command* cmd, char* buf, int len) {
         return CMD_ERR_BAD_CMD;
     }
 
-    return 0;
+	// Resize command and process it
+	if (decode_fn) {
+		cmd = ring_resize(cmd_pool, cmd_size);
+		if (cmd == NULL) {
+			// Failed to resize the command in the pool
+			return CMD_ERROR_OTHER;
+		}
+		decode_fn(cmd);
+	}
+
+    return CMD_OK;
 }
 
 const char* cmdErrToText(int errcode) {

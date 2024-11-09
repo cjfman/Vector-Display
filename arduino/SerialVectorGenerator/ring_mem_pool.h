@@ -7,7 +7,7 @@
 #define RING_CRITICAL -3
 
 typedef struct RingEntryHdr {
-	int num;
+	int idx;
 	int size;
 } RingEntryHdr;
 
@@ -19,11 +19,14 @@ typedef struct RingMemPool {
 	int tail;
 	int wrap_point;
 	void* memory;
+	RingEntryHdr* last_hdr;
 	int last_err;
 } RingMemPool;
 
-void ring_init(RingMemPool* ring, char* memory, int size);
+void ring_init(RingMemPool* ring, void* memory, int size);
+int ring_remaining(const RingMemPool* ring);
 void* ring_get(RingMemPool* ring, int size);
 int ring_pop(RingMemPool* ring);
+void* ring_resize(RingMemPool* ring, int size);
 
 #endif // RING_MEM_POOL_H

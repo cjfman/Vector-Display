@@ -1,6 +1,8 @@
 #ifndef CONTROL_PARSER_HH
 #define CONTROL_PARSER_HH
 
+#include "ring_mem_pool.h"
+
 #define CMD_BUF_SIZE 256
 #define CMD_MAX_NUM_ARGS 10
 #define CMD_MAX_TOKEN 16
@@ -86,9 +88,7 @@ int noopCommand(void);
 int commandComplete(void);
 int cmdBufLen(void);
 int getCmd(char* buf, int buf_len);
-int cmdParse(Command* cmd, char* buf, int len);
-int cmdDecodePrint(char* buf, uint16_t* tube_bitmap, int bitmap_len);
-int cmdDecodeToken(char* buf, uint16_t* bitmap);
+int cmdParse(RingMemPool* cmd_pool, char* buf, int len);
 const char* cmdErrToText(int errcode);
 
 #endif // CONTROL_PARSER_HH

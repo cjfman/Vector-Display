@@ -1,9 +1,11 @@
-#include "command_parser.h"
-
 extern "C" {
     #include "command_parser.h"
+    #include "ring_mem_pool.h"
 }
 #define BAUD 115200
+
+char cmd_mem[1<<10];
+RingMemPool cmd_pool;
 
 void newline() {
     Serial.print("\n");
@@ -41,6 +43,7 @@ String intToString(int i) {
 void setup() {
     Serial.begin(BAUD);
     Serial.print("Vector Generator Command Terminal\n");
+    ring_init(&cmd_pool, cmd_mem, sizeof(cmd_mem));
     printPrompt();
 }
 
@@ -90,8 +93,7 @@ void runOnce(void) {
     }
 
     // Parse command
-    Command* cmd;
-    errcode = cmdParse(cmd, cmd_buf, CMD_BUF_SIZE);
+    errcode = cmdParse(&cmd_pool, cmd_buf, CMD_BUF_SIZE);
     if (errcode) {
         printErrorCode(errcode);
         printPrompt();
