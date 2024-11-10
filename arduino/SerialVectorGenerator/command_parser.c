@@ -185,7 +185,8 @@ int cmdParse(RingMemPool* cmd_pool, char* buf, int len) {
 	// Command arguments are space separated
     int count = 0;
 	char* cmd_start = buf;
-    for (int i = 0; i < len; i++) {
+	int i;
+    for (i = 0; i < len; i++) {
         if (buf[i] == ' ') {
 			// Trim off leading spaces
 			if (count == 0) {

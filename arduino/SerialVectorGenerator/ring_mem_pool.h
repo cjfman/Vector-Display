@@ -28,5 +28,6 @@ int ring_remaining(const RingMemPool* ring);
 void* ring_get(RingMemPool* ring, int size);
 int ring_pop(RingMemPool* ring);
 void* ring_resize(RingMemPool* ring, int size);
+void* last_entry(const RingMemPool* pool);
 
 #endif // RING_MEM_POOL_H

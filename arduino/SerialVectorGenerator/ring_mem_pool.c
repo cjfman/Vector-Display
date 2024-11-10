@@ -57,7 +57,7 @@ void* ring_get(RingMemPool* ring, int size) {
 	ring->last_hdr->size = size;
 	ring->head  += sizeof(RingEntryHdr);
 	ring->used  += sizeof(RingEntryHdr);
-	ring->count += 1
+	ring->count += 1;
 
 	// Get pointer to entry
 	void* start = &ring->memory[ring->head];
@@ -140,4 +140,9 @@ void* ring_resize(RingMemPool* ring, int size) {
 	ring->head += missing;
 	ring->last_hdr->size += missing;
 	return &ring->memory[ring->last_hdr->idx + sizeof(RingEntryHdr)];
+}
+
+void* last_entry(const RingMemPool* pool) {
+	if (!pool->last_hdr) return NULL;
+	return pool->last_hdr + sizeof(RingEntryHdr);
 }

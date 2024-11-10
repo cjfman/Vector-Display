@@ -99,9 +99,12 @@ void runOnce(void) {
         printPrompt();
         return;
     }
+
+    Serial.print(commandToString(last_entry(&cmd_pool)) + "\n");
+    printPrompt();
 }
 
 void loop() {
-    printPrompt();
+    runOnce();
     delay(1);
 }
