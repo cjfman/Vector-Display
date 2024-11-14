@@ -1,3 +1,8 @@
+// RingMemPool
+// A ring buffer like memory pool that can store entries of arbitrary size
+// Although it is written in a lock free way, this is mostly academic as
+// AVR 8-bit micro controllers doesn't provide atomic types beyond a byte
+
 #ifndef RING_MEM_POOL_H
 #define RING_MEM_POOL_H
 
@@ -13,8 +18,6 @@ typedef struct RingEntryHdr {
 
 typedef struct RingMemPool {
 	int size;
-	int used;
-	int count;
 	int head;
 	int tail;
 	int wrap_point;

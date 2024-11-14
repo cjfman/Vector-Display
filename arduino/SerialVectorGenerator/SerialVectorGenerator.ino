@@ -1,11 +1,14 @@
 extern "C" {
-    #include "command_parser.h"
-    #include "ring_mem_pool.h"
+#include "command_parser.h"
+#include "ring_mem_pool.h"
+#include "screen_controller.h"
 }
+
 #define BAUD 115200
 
 char cmd_mem[1<<10];
-RingMemPool cmd_pool;
+RingMemPool cmd_pool = {0};
+ScreenState screen   = {0};
 
 void newline() {
     Serial.print("\n");

@@ -9,22 +9,37 @@ void ring_init(RingMemPool* ring, void* memory, int size) {
 }
 
 // Check how much contiguous memory is available
+// Only a writer may call this
 int ring_remaining(const RingMemPool* ring) {
 	if (ring->head == ring->tail) {
 		// The head and tail are pointing to the same location
 		// Either all the memory is available, or none of it is
-		return (ring->used == 0) ? ring->size : 0;
+		// If there's a wrap point, all data is being used
+		return (ring->wrap_point) ? ring->size : 0;
 	}
-	if (ring->head < ring->tail) {
+
+	// Copy values to ensure nothing else changes them
+	int tail       = ring->tail;
+	int wrap_point = ring->wrap_point;
+
+	// Synchronicity note
+	// If the tail is trailing the head, even if it moves it
+	// won't pass the head, there for the memory from the head
+	// to the end of the ring will valid free memory
+	// If the tail wraps while this function is being called
+	// the space between the head and old tail will still
+	// be valid free memory
+	
+	if (wrap_point) {
 		// Head trails tail. Only the memory from
 		// the head to the tail is available
-		return ring->tail - ring->head;
+		return tail - ring->head;
 	}
 
 	// Head leads tail. There is memory available after the head
-	// and befor the tail. Return the larger one
+	// and before the tail. Return the larger one
 	int after = ring->size - ring->head;
-	return (after > ring->tail) ? after : ring->tail;
+	return (after > tail) ? after : tail;
 }
 
 // Get an entry onto the ring
@@ -52,17 +67,19 @@ void* ring_get(RingMemPool* ring, int size) {
 	}
 
 	// Construct a header
-	ring->last_hdr = (RingEntryHdr*) &ring->memory[ring->head];
-	ring->last_hdr->idx  = ring->head;
-	ring->last_hdr->size = size;
-	ring->head  += sizeof(RingEntryHdr);
-	ring->used  += sizeof(RingEntryHdr);
-	ring->count += 1;
+	int data_count = 0;
+	RingEntryHdr* hdr = (RingEntryHdr*) &ring->memory[ring->head];
+	hdr->idx = ring->head;
+	hdr->size = size;
+	data_count += sizeof(RingEntryHdr);
 
 	// Get pointer to entry
 	void* start = &ring->memory[ring->head];
-	ring->head += size;
-	ring->used += size;
+	data_count += size;
+
+	// Update head and metadata
+	ring->head  += data_count;
+	ring->last_hdr = hdr;
 	ring->last_err = RING_OK;
 
 	return start;
@@ -71,28 +88,28 @@ void* ring_get(RingMemPool* ring, int size) {
 // Clear an entry from the ring
 int ring_pop(RingMemPool* ring) {
 	// Do nothing if there's nothing to pop
-	if (ring->count == 0) {
+	if (ring->head == ring->tail) {
 		return 0; // Nothing to pop
 	}
 
 	// Get header and move tail
 	RingEntryHdr* hdr = &ring->memory[ring->tail];
-	ring->used -= hdr->size + sizeof(RingEntryHdr);
-	ring->tail += hdr->size + sizeof(RingEntryHdr);
-	ring->count--;
+	int size = hdr->size + sizeof(RingEntryHdr);
 
 	// Wrap tail if it has passed the wrap point
-	if (ring->tail >= ring->wrap_point) {
+	if (ring->tail + size >= ring->wrap_point) {
 		ring->tail = 0;
 		ring->wrap_point = 0;
 	}
+	else {
+		ring->tail += size;
+	}
 
 	// Clear last header
-	if (ring->count == 0) {
+	if (ring->head == ring->tail) {
 		ring->last_hdr = 0;
 	}
 
-	ring->last_err = RING_OK;
 	return hdr->size;
 }
 
@@ -122,7 +139,7 @@ void* ring_resize(RingMemPool* ring, int size) {
 		}
 	}
 	else if (ring->head < ring->tail) {
-		// Head is training tail
+		// Head is trailing tail
 		// Check for memory between them
 		if (ring->tail - ring->head < missing) {
 			// Ran out of space
@@ -130,15 +147,16 @@ void* ring_resize(RingMemPool* ring, int size) {
 			return NULL;
 		}
 	}
-	else if (ring->head == ring->tail) {
-		// Either out of memory or have a serious error
-		ring->last_err = (ring->count) ? RING_OUT_OF_MEM : RING_CRITICAL;
+	else if (ring->head == ring->tail && ring->wrap_point) {
+		// Head has wrapped and is pointing to tail
+		// Out of memory
+		ring->last_err = RING_OUT_OF_MEM;
 		return NULL;
 	}
 
 	// Move head and return pointer to last data entry
-	ring->head += missing;
 	ring->last_hdr->size += missing;
+	ring->head += missing;
 	return &ring->memory[ring->last_hdr->idx + sizeof(RingEntryHdr)];
 }
 

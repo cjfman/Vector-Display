@@ -36,7 +36,7 @@ void calcLine(int elapsed_time_ms, const LineCmd* cmd, const ScreenState* screen
 	calcPointHelper(x, y, screen, beam);
 }
 
-void nextScreenState(int elapsed_time_ms, const Command* cmd, const ScreenState* screen, BeamState* beam) {
+int nextScreenState(int elapsed_time_ms, const Command* cmd, const ScreenState* screen, BeamState* beam) {
 	switch (cmd->type) {
 	case Cmd_Point:
 		calcPoint(cmd, screen, beam);
@@ -49,4 +49,5 @@ void nextScreenState(int elapsed_time_ms, const Command* cmd, const ScreenState*
 		beam->y = 0;
 		beam->a = 0;
 	}
+	return 1;
 }

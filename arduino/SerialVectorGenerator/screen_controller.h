@@ -16,7 +16,7 @@ typedef struct BeamState {
 	int a; // Active
 } BeamState;
 
-void nextScreenState(const int elapsed_time, const Command* cmd, const ScreenState* screen, BeamState* beam);
+int nextScreenState(const int elapsed_time, const Command* cmd, const ScreenState* screen, BeamState* beam);
 
 
 
