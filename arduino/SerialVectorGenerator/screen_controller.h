@@ -41,8 +41,13 @@ typedef struct LineMotion {
 	int length;
 } LineMotion;
 
-
 int nextScreenState(const int elapsed_time, const ScreenMotion* cmd, const ScreenState* screen, BeamState* beam);
+void screen_init(void);
+void screen_push_point(const PointCmd* cmd);
+void screen_push_line(const LineCmd* cmd);
 
+extern char motion_mem[];
+extern RingMemPool motion_pool;
+extern ScreenState screen;
 
 #endif // SCREEN_CONTROLLER_HH

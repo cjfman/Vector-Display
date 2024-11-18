@@ -17,20 +17,17 @@ typedef struct RingEntryHdr {
 } RingEntryHdr;
 
 typedef struct RingMemPool {
-	int size;
-	int head;
-	int tail;
-	int wrap_point;
+	volatile int size;
+	volatile int head;
+	volatile int tail;
+	volatile int wrap_point;
+	volatile int last_err;
 	void* memory;
-	RingEntryHdr* last_hdr;
-	int last_err;
 } RingMemPool;
 
 void ring_init(RingMemPool* ring, void* memory, int size);
 int ring_remaining(const RingMemPool* ring);
 void* ring_get(RingMemPool* ring, int size);
 int ring_pop(RingMemPool* ring);
-void* ring_resize(RingMemPool* ring, int size);
-void* last_entry(const RingMemPool* pool);
 
 #endif // RING_MEM_POOL_H

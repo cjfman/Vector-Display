@@ -1,10 +1,16 @@
 #include <Math.h>
+#include <util/atomic.h>
 
+#include "ring_mem_pool.h"
 #include "screen_controller.h"
 
 #define SCREEN_MAX_VALUE 128
 #define SCREEN_MIN_VALUE 0
 #define SCREEN_WIDTH (SCREEN_MAX_VALUE - SCREEN_MIN_VALUE)
+
+char motion_mem[1<<10];
+RingMemPool motion_pool = {0};
+ScreenState screen   = {0};
 
 static inline int abs_int(int val) {
 	return (val < 0) ? val * -1 : val;
@@ -54,4 +60,18 @@ int nextScreenState(int elapsed_time_ms, const ScreenMotion* motion, const Scree
 		beam->a = 0;
 	}
 	return 1;
+}
+
+void screen_init(void) {
+    ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
+}
+
+void screen_push_point(const PointCmd* cmd) {
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+	}
+}
+
+void screen_push_line(const LineCmd* cmd) {
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+	}
 }

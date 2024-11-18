@@ -79,7 +79,6 @@ void* ring_get(RingMemPool* ring, int size) {
 
 	// Update head and metadata
 	ring->head  += data_count;
-	ring->last_hdr = hdr;
 	ring->last_err = RING_OK;
 
 	return start;
@@ -105,62 +104,5 @@ int ring_pop(RingMemPool* ring) {
 		ring->tail += size;
 	}
 
-	// Clear last header
-	if (ring->head == ring->tail) {
-		ring->last_hdr = 0;
-	}
-
 	return hdr->size;
-}
-
-// Resize the last entry
-void* ring_resize(RingMemPool* ring, int size) {
-	// Check the header
-	if (!ring->last_hdr) {
-		ring->last_err = RING_ERR;
-		return NULL;
-	}
-
-	// Don't shrink the last entry
-	if (size < ring->last_hdr->size) {
-		ring->last_err = RING_OK;
-		return &ring->memory[ring->last_hdr->idx + sizeof(RingEntryHdr)];
-	}
-
-	// Check for additional memory after the head
-	int missing = size - ring->last_hdr->size;
-	if (ring->head > ring->tail) {
-		// Head is leading tail
-		// Check for more memory at the end of the ring
-		if (ring->size - ring->head < missing) {
-			// Ran out of space
-			ring->last_err = RING_OUT_OF_MEM;
-			return NULL;
-		}
-	}
-	else if (ring->head < ring->tail) {
-		// Head is trailing tail
-		// Check for memory between them
-		if (ring->tail - ring->head < missing) {
-			// Ran out of space
-			ring->last_err = RING_OUT_OF_MEM;
-			return NULL;
-		}
-	}
-	else if (ring->head == ring->tail && ring->wrap_point) {
-		// Head has wrapped and is pointing to tail
-		// Out of memory
-		ring->last_err = RING_OUT_OF_MEM;
-		return NULL;
-	}
-
-	// Move head and return pointer to last data entry
-	ring->last_hdr->size += missing;
-	ring->head += missing;
-	return &ring->memory[ring->last_hdr->idx + sizeof(RingEntryHdr)];
-}
-
-void* last_entry(const RingMemPool* pool) {
-	if (!pool->last_hdr) return NULL;
-	return pool->last_hdr + sizeof(RingEntryHdr);
 }

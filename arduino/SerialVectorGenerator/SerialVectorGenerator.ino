@@ -6,10 +6,6 @@ extern "C" {
 
 #define BAUD 115200
 
-char motion_mem[1<<10];
-RingMemPool motion_pool = {0};
-ScreenState screen   = {0};
-
 void newline() {
     Serial.print("\n");
 }
@@ -46,7 +42,7 @@ String intToString(int i) {
 void setup() {
     Serial.begin(BAUD);
     Serial.print("Vector Generator Command Terminal\n");
-    ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
+    screen_init();
     printPrompt();
 }
 
@@ -104,7 +100,22 @@ void runOnce(void) {
         return;
     }
 
-    Serial.print(commandToString(last_entry(&motion_pool)) + "\n");
+    // Run command
+    /*
+    switch (cmd->base->type) {
+    case PointCmd:
+        screen_push_point((PointCmd*)cmd);
+        break;
+    case LineCmd:
+        screen_line_point((LineCmd*)cmd);
+        break;
+    case ScaleCmd:
+        // TODO
+        break;
+    }
+    */
+
+    Serial.print(commandToString((Command*)&cmd) + "\n");
     printPrompt();
 }
 
