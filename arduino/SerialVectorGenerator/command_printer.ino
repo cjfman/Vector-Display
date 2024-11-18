@@ -14,11 +14,11 @@ static inline String printPoint(const PointCmd* cmd) {
 }
 
 static inline String printLine(const LineCmd* cmd) {
-	return String("line x1: ") + cmd->x1
+	return String("line")
+    + " x1: " + cmd->x1
 		+ " y1: " + cmd->y1
 		+ " x2: " + cmd->x2
-		+ " y2: " + cmd->y2
-		+ " ms: " + cmd->ms;
+		+ " y2: " + cmd->y2;
 }
 
 String commandToString(const Command* cmd) {

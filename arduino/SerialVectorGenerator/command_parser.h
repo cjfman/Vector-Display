@@ -78,8 +78,14 @@ typedef struct LineCmd {
 	int y1;
 	int x2;
 	int y2;
-	unsigned ms;
 } LineCmd;
+
+typedef union CmdUnion {
+	Command  base;
+	ScaleCmd scale;
+	PointCmd point;
+	LineCmd  line;
+} CommandUnion;
 
 void clearCache(void);
 int buildCmd(char* new_cmd, int len);
@@ -88,7 +94,7 @@ int noopCommand(void);
 int commandComplete(void);
 int cmdBufLen(void);
 int getCmd(char* buf, int buf_len);
-int cmdParse(RingMemPool* cmd_pool, char* buf, int len);
+int cmdParse(CommandUnion* cmd_pool, char* buf, int len);
 const char* cmdErrToText(int errcode);
 
 #endif // CONTROL_PARSER_HH

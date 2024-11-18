@@ -1,7 +1,10 @@
+#include <Math.h>
+
 #include "screen_controller.h"
 
 #define SCREEN_MAX_VALUE 128
 #define SCREEN_MIN_VALUE 0
+#define SCREEN_WIDTH (SCREEN_MAX_VALUE - SCREEN_MIN_VALUE)
 
 static inline int abs_int(int val) {
 	return (val < 0) ? val * -1 : val;
@@ -18,31 +21,32 @@ static inline int get_abs_pos(int val, int scale, int offset) {
 
 static void calcPointHelper(int x, int y, const ScreenState* screen, BeamState* beam) {
 	// Scale and offset position
-	long diff = SCREEN_MAX_VALUE - SCREEN_MIN_VALUE;
-	beam->x = diff * get_abs_pos(x, screen->x_scale, screen->x_offset) / screen->x_scale - SCREEN_MIN_VALUE;
-	beam->y = diff * get_abs_pos(y, screen->y_scale, screen->y_offset) / screen->y_scale - SCREEN_MIN_VALUE;
+	beam->x = SCREEN_WIDTH * get_abs_pos(x, screen->x_scale, screen->x_offset) / screen->x_scale - SCREEN_MIN_VALUE;
+	beam->y = SCREEN_WIDTH * get_abs_pos(y, screen->y_scale, screen->y_offset) / screen->y_scale - SCREEN_MIN_VALUE;
 	beam->a = 1;
 }
 
-static void calcPoint(const PointCmd* cmd, const ScreenState* screen, BeamState* beam) {
-	calcPointHelper(cmd->x, cmd->y, screen, beam);
+static void calcPoint(const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
+	calcPointHelper(motion->x, motion->y, screen, beam);
 }
 
-void calcLine(int elapsed_time_ms, const LineCmd* cmd, const ScreenState* screen, BeamState* beam) {
-	float completed = (float)elapsed_time_ms / cmd->ms;
-	completed = (completed > 1) ? completed : 1;
-	int x = (cmd->x2 - cmd->x1) * completed + cmd->x1;
-	int y = (cmd->y2 - cmd->y1) * completed + cmd->y1;
+void calcLine(int elapsed_time_ms, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+	// Dert: Distance = Rate * time
+	// Rate = screen->speed / SCREEN_WIDTH
+	long completed_nom   = (long)screen->speed * elapsed_time_ms;
+	long completed_denom = (long)SCREEN_WIDTH  * motion->length;
+	int x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
+	int y = (motion->y2 - motion->y1) * completed_nom / completed_denom;
 	calcPointHelper(x, y, screen, beam);
 }
 
-int nextScreenState(int elapsed_time_ms, const Command* cmd, const ScreenState* screen, BeamState* beam) {
-	switch (cmd->type) {
-	case Cmd_Point:
-		calcPoint(cmd, screen, beam);
+int nextScreenState(int elapsed_time_ms, const ScreenMotion* motion, const ScreenState* screen, BeamState* beam) {
+	switch (motion->type) {
+	case SM_Point:
+		calcPoint(motion, screen, beam);
 		break;
-	case Cmd_Line:
-		calcLine(elapsed_time_ms, cmd, screen, beam);
+	case SM_Line:
+		calcLine(elapsed_time_ms, motion, screen, beam);
 		break;
 	default:
 		beam->x = 0;

@@ -167,21 +167,15 @@ int cmdDecodePoint(PointCmd* cmd) {
 // Decode a line command
 int cmdDecodeLine(LineCmd* cmd) {
 	const Command* base = &cmd->base;
-	if (base->numargs != 5) return CMD_ERR_WRONG_NUM_ARGS;
+	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
 	cmd->x1 = atoi(base->args[0]);
 	cmd->y1 = atoi(base->args[1]);
 	cmd->x2 = atoi(base->args[2]);
 	cmd->y2 = atoi(base->args[3]);
-	cmd->ms = atoi(base->args[4]);
 }
 
 // Parse a command line
-int cmdParse(RingMemPool* cmd_pool, char* buf, int len) {
-	// Get a new command
-	Command* cmd = ring_get(cmd_pool, sizeof(Command));
-	if (!cmd) return CMD_ERROR_OTHER;
-
-
+int cmdParse(CommandUnion* cmd, char* buf, int len) {
 	// Command arguments are space separated
     int count = 0;
 	char* cmd_start = buf;
@@ -200,47 +194,42 @@ int cmdParse(RingMemPool* cmd_pool, char* buf, int len) {
 			// Reached the end of an argument
             buf[i] = '\0'; // Replace with null char
             // Pointer to argument
-            cmd->args[count++] = &buf[++i];
+            cmd->base.args[count++] = &buf[++i];
         }
     }
     if (!count) return CMD_ERR_WRONG_NUM_ARGS;
 
     buf[i] = '\0'; // Mark end of last arg
-    cmd->buf = cmd_start;
-    cmd->numargs = count;
+    cmd->base.buf     = cmd_start;
+    cmd->base.numargs = count;
 
     // Get cmd type
 	int (*decode_fn)(Command* cmd) = NULL;
 	int cmd_size = 0;
     if (strcmp(cmd_set[Cmd_Scale], buf) == 0) {
-        cmd->type = Cmd_Scale;
+        cmd->base.type = Cmd_Scale;
 		decode_fn = cmdDecodeScale;
 		cmd_size  = sizeof(ScaleCmd);
     }
 	else if (strcmp(cmd_set[Cmd_Point], buf) == 0) {
-        cmd->type = Cmd_Point;
+        cmd->base.type = Cmd_Point;
 		decode_fn = cmdDecodePoint;
 		cmd_size  = sizeof(PointCmd);
     }
 	else if (strcmp(cmd_set[Cmd_Line], buf) == 0) {
-        cmd->type = Cmd_Line;
+        cmd->base.type = Cmd_Line;
 		decode_fn = cmdDecodeLine;
 		cmd_size  = sizeof(LineCmd);
     }
 	else if (strcmp(cmd_set[Cmd_Noop], buf) == 0) {
-        cmd->type = Cmd_Noop;
+        cmd->base.type = Cmd_Noop;
     }
     else {
         return CMD_ERR_BAD_CMD;
     }
 
-	// Resize command and process it
+	// Process command
 	if (decode_fn) {
-		cmd = ring_resize(cmd_pool, cmd_size);
-		if (cmd == NULL) {
-			// Failed to resize the command in the pool
-			return CMD_ERROR_OTHER;
-		}
 		decode_fn(cmd);
 	}
 
