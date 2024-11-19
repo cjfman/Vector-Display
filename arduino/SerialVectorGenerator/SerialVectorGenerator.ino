@@ -101,19 +101,19 @@ void runOnce(void) {
     }
 
     // Run command
-    /*
-    switch (cmd->base->type) {
-    case PointCmd:
-        screen_push_point((PointCmd*)cmd);
+    switch (cmd.base.type) {
+    case Cmd_Point:
+        screen_push_point((PointCmd*)&cmd);
         break;
-    case LineCmd:
-        screen_line_point((LineCmd*)cmd);
+    case Cmd_Line:
+        screen_push_line((LineCmd*)&cmd);
         break;
-    case ScaleCmd:
-        // TODO
+    case Cmd_Scale:
+        screen_set_scale(&main_screen, (ScaleCmd*)&cmd);
+        break;
+    case Cmd_Noop:
         break;
     }
-    */
 
     Serial.print(commandToString((Command*)&cmd) + "\n");
     printPrompt();

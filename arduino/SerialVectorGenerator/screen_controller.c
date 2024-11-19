@@ -10,7 +10,7 @@
 
 char motion_mem[1<<10];
 RingMemPool motion_pool = {0};
-ScreenState screen   = {0};
+ScreenState screen      = {0};
 
 static inline int abs_int(int val) {
 	return (val < 0) ? val * -1 : val;
@@ -39,6 +39,7 @@ static void calcPoint(const PointMotion* motion, const ScreenState* screen, Beam
 void calcLine(int elapsed_time_ms, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
 	// Dert: Distance = Rate * time
 	// Rate = screen->speed / SCREEN_WIDTH
+	// Completed = distance / length
 	long completed_nom   = (long)screen->speed * elapsed_time_ms;
 	long completed_denom = (long)SCREEN_WIDTH  * motion->length;
 	int x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
@@ -66,12 +67,49 @@ void screen_init(void) {
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
 }
 
-void screen_push_point(const PointCmd* cmd) {
+int screen_push_point(const PointCmd* cmd) {
+	int success;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		// Allocate object from the pool
+		PointMotion* motion = ring_get(&motion_pool, sizeof(PointMotion));
+		if (!motion) {
+			success = 0;
+		}
+		else {
+			// Populate motion
+			motion->x = cmd->x;
+			motion->y = cmd->y;
+			success = 1;
+		}
 	}
+	return success;
 }
 
-void screen_push_line(const LineCmd* cmd) {
+int screen_push_line(const LineCmd* cmd) {
+	int success;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		// Allocate object from the pool
+		LineMotion* motion = ring_get(&motion_pool, sizeof(LineMotion));
+		if (!motion) {
+			success = 0;
+		}
+		else {
+			// Populate motion
+			motion->x1 = cmd->x1;
+			motion->y1 = cmd->y1;
+			motion->x2 = cmd->x2;
+			motion->y2 = cmd->y2;
+
+			// Calculate length
+			motion->length = sqrt(sq(cmd->x2 - cmd->x1) + sq(cmd->y2 - cmd->y1));
+		}
+	}
+	return success;
+}
+
+void screen_set_scale(ScreenState* screen, const ScaleCmd* cmd) {
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		screen->x_scale = cmd->x_scale;
+		screen->y_scale = cmd->y_scale;
 	}
 }
