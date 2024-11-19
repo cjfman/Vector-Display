@@ -10,7 +10,7 @@
 
 char motion_mem[1<<10];
 RingMemPool motion_pool = {0};
-ScreenState screen      = {0};
+ScreenState main_screen = {0};
 
 static inline int abs_int(int val) {
 	return (val < 0) ? val * -1 : val;
@@ -36,24 +36,24 @@ static void calcPoint(const PointMotion* motion, const ScreenState* screen, Beam
 	calcPointHelper(motion->x, motion->y, screen, beam);
 }
 
-void calcLine(int elapsed_time_ms, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+void calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
 	// Dert: Distance = Rate * time
 	// Rate = screen->speed / SCREEN_WIDTH
 	// Completed = distance / length
-	long completed_nom   = (long)screen->speed * elapsed_time_ms;
+	long completed_nom   = (long)screen->speed * elapsed;
 	long completed_denom = (long)SCREEN_WIDTH  * motion->length;
 	int x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
 	int y = (motion->y2 - motion->y1) * completed_nom / completed_denom;
 	calcPointHelper(x, y, screen, beam);
 }
 
-int nextScreenState(int elapsed_time_ms, const ScreenMotion* motion, const ScreenState* screen, BeamState* beam) {
+int nextBeamState(int elapsed, const ScreenMotion* motion, const ScreenState* screen, BeamState* beam) {
 	switch (motion->type) {
 	case SM_Point:
 		calcPoint(motion, screen, beam);
 		break;
 	case SM_Line:
-		calcLine(elapsed_time_ms, motion, screen, beam);
+		calcLine(elapsed, motion, screen, beam);
 		break;
 	default:
 		beam->x = 0;
@@ -65,6 +65,10 @@ int nextScreenState(int elapsed_time_ms, const ScreenMotion* motion, const Scree
 
 void screen_init(void) {
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
+	memset(&main_screen, '\0', sizeof(main_screen));
+	main_screen.x_scale = 100;
+	main_screen.y_scale = 100;
+	main_screen.speed   = 100000; // 100 ms
 }
 
 int screen_push_point(const PointCmd* cmd) {
@@ -107,9 +111,26 @@ int screen_push_line(const LineCmd* cmd) {
 	return success;
 }
 
-void screen_set_scale(ScreenState* screen, const ScaleCmd* cmd) {
+void screen_set_scale(const ScaleCmd* cmd) {
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-		screen->x_scale = cmd->x_scale;
-		screen->y_scale = cmd->y_scale;
+		main_screen.x_scale = cmd->x_scale;
+		main_screen.y_scale = cmd->y_scale;
 	}
+}
+
+void update_screen(long time) {
+	long elapsed = time - main_screen.last_update;
+	main_screen.last_update = time;
+
+	// Get motion
+	ScreenMotion* motion = ring_pop(&motion_pool);
+	if (!motion) {
+		return;
+	}
+
+	// Determine new beam position
+	BeamState state;
+	nextBeamState(elapsed, motion, &main_screen, &state);
+
+	// TODO Update screen hardware
 }

@@ -101,25 +101,28 @@ void runOnce(void) {
     }
 
     // Run command
+    int success = 1;
     switch (cmd.base.type) {
     case Cmd_Point:
-        screen_push_point((PointCmd*)&cmd);
+        success = screen_push_point((PointCmd*)&cmd);
         break;
     case Cmd_Line:
-        screen_push_line((LineCmd*)&cmd);
+        success = screen_push_line((LineCmd*)&cmd);
         break;
     case Cmd_Scale:
-        screen_set_scale(&main_screen, (ScaleCmd*)&cmd);
+        screen_set_scale((ScaleCmd*)&cmd);
         break;
     case Cmd_Noop:
         break;
     }
 
     Serial.print(commandToString((Command*)&cmd) + "\n");
+    Serial.print((success) ? "OK" : "FAILED");
     printPrompt();
 }
 
 void loop() {
     runOnce();
+    update_screen(micros());
     delay(1);
 }
