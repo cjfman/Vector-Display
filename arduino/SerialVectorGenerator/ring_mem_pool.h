@@ -12,22 +12,22 @@
 #define RING_CRITICAL -3
 
 typedef struct RingEntryHdr {
-	int idx;
-	int size;
+	unsigned idx;
+	unsigned size;
 } RingEntryHdr;
 
 typedef struct RingMemPool {
-	volatile int size;
-	volatile int head;
-	volatile int tail;
-	volatile int wrap_point;
+	volatile unsigned size;
+	volatile unsigned head;
+	volatile unsigned tail;
+	volatile unsigned wrap_point;
 	volatile int last_err;
 	void* memory;
 } RingMemPool;
 
-void ring_init(RingMemPool* ring, void* memory, int size);
-int ring_remaining(const RingMemPool* ring);
-void* ring_get(RingMemPool* ring, int size);
-int ring_pop(RingMemPool* ring);
+void ring_init(RingMemPool* ring, void* memory, unsigned size);
+unsigned ring_remaining(const RingMemPool* ring);
+void* ring_get(RingMemPool* ring, unsigned size);
+unsigned ring_pop(RingMemPool* ring);
 
 #endif // RING_MEM_POOL_H

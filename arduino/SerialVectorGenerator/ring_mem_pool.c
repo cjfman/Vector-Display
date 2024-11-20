@@ -1,8 +1,10 @@
+#include <string.h>
+
 #include "common.h"
 #include "ring_mem_pool.h"
 
 // Initialize ring
-void ring_init(RingMemPool* ring, void* memory, int size) {
+void ring_init(RingMemPool* ring, void* memory, unsigned size) {
 	memset(ring, '\0', sizeof(RingMemPool));
 	ring->size   = size;
 	ring->memory = memory;
@@ -10,7 +12,7 @@ void ring_init(RingMemPool* ring, void* memory, int size) {
 
 // Check how much contiguous memory is available
 // Only a writer may call this
-int ring_remaining(const RingMemPool* ring) {
+unsigned ring_remaining(const RingMemPool* ring) {
 	if (ring->head == ring->tail) {
 		// The head and tail are pointing to the same location
 		// Either all the memory is available, or none of it is
@@ -43,7 +45,7 @@ int ring_remaining(const RingMemPool* ring) {
 }
 
 // Get an entry onto the ring
-void* ring_get(RingMemPool* ring, int size) {
+void* ring_get(RingMemPool* ring, unsigned size) {
 	// Don't do anything for zero size
 	if (size == 0) {
 		ring->last_err = RING_OK;
@@ -85,7 +87,7 @@ void* ring_get(RingMemPool* ring, int size) {
 }
 
 // Clear an entry from the ring
-int ring_pop(RingMemPool* ring) {
+unsigned ring_pop(RingMemPool* ring) {
 	// Do nothing if there's nothing to pop
 	if (ring->head == ring->tail) {
 		return 0; // Nothing to pop
