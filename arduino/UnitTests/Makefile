@@ -23,10 +23,10 @@ GTEST_DIR = gtest
 USER_DIR =../SerialVectorGenerator
 
 # Tests
-TESTS =                         \
-	    #ring_mem_pool_test.c    \
-		#command_parser_test.cpp \
-	    #screen_controller.c     \
+TESTS =                             \
+		ring_mem_pool_tests.cpp     \
+		#command_parser_tests.cpp    \
+	    #screen_controller_tests.cpp \
 
 # All of the sources I want compiled
 SRC =                     \
@@ -68,8 +68,7 @@ all : $(TARGET)
 GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 
 USER_OBJS = $(SRC:%.c=$(USER_DIR)/%.c.o)
-TEST_OBJS = all_tests.cpp.o 
-#TEST_OBJS = $(TESTS:.cpp=.cpp.o)
+TEST_OBJS = $(TESTS:%.cpp=%.cpp.o)
 OBJS = $(USER_OBJS) $(TEST_OBJS)
 LOCAL_OBJS = $(notdir $(OBJS))
 
@@ -106,20 +105,20 @@ gtest_main.a : gtest-all.o gtest_main.o
 #sample1_unittest : sample1.o sample1_unittest.o gtest_main.a
 #	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
-all_tests.cpp:
-	cat $(TESTS) >> $@
-
 $(USER_DIR)/%.c.o : $(USER_DIR)/%.c
 	$(CC) $(CCFLAGS) -c -o $(notdir $@) $<
 
 $(USER_DIR)/%.cpp.o : $(USER_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $(notdir $@) $<
 
-%.c.o : %.c
-	$(CC) $(CCFLAGS) -c -o $@ $<
-
-%.cpp.o : %.cpp
+$(TEST_OBJS): %.cpp.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+#%.c.o : %.c
+#	$(CC) $(CCFLAGS) -c -o $@ $<
+#
+#%.cpp.o : %.cpp
+#	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(TARGET) : gtest_main.a $(OBJS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $(notdir $^) -o $(TARGET) 
@@ -128,7 +127,7 @@ $(TARGET) : gtest_main.a $(OBJS)
 #########
 
 clean :
-	rm -f $(TARGET) $(LOCAL_OBJS) all_tests.cpp
+	rm -f $(TARGET) $(LOCAL_OBJS)
 
 clean-all : clean 
 	rm -f gtest.a gtest_main.a *.o
