@@ -126,6 +126,10 @@ $(TARGET) : gtest_main.a $(OBJS)
 
 #########
 
+test: $(TARGET)
+	./$(TARGET)
+	
+
 clean :
 	rm -f $(TARGET) $(LOCAL_OBJS)
 

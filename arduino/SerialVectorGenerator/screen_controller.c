@@ -123,7 +123,7 @@ void update_screen(long time) {
 	main_screen.last_update = time;
 
 	// Get motion
-	ScreenMotion* motion = ring_pop(&motion_pool);
+	ScreenMotion* motion = ring_peek(&motion_pool);
 	if (!motion) {
 		return;
 	}
@@ -131,6 +131,7 @@ void update_screen(long time) {
 	// Determine new beam position
 	BeamState state;
 	nextBeamState(elapsed, motion, &main_screen, &state);
+	ring_pop(&motion_pool);
 
 	// TODO Update screen hardware
 }

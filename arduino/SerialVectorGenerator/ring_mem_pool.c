@@ -6,8 +6,9 @@
 // Initialize ring
 void ring_init(RingMemPool* ring, void* memory, unsigned size) {
 	memset(ring, '\0', sizeof(RingMemPool));
-	ring->size   = size;
-	ring->memory = memory;
+	ring->size     = size;
+	ring->memory   = memory;
+	ring->last_err = RING_OK;
 }
 
 // Check how much contiguous memory is available
@@ -17,7 +18,7 @@ unsigned ring_remaining(const RingMemPool* ring) {
 		// The head and tail are pointing to the same location
 		// Either all the memory is available, or none of it is
 		// If there's a wrap point, all data is being used
-		return (ring->wrap_point) ? ring->size : 0;
+		return (!ring->wrap_point) ? ring->size : 0;
 	}
 
 	// Copy values to ensure nothing else changes them
@@ -71,7 +72,6 @@ void* ring_get(RingMemPool* ring, unsigned size) {
 	// Construct a header
 	int data_count = 0;
 	RingEntryHdr* hdr = (RingEntryHdr*) &ring->memory[ring->head];
-	hdr->idx = ring->head;
 	hdr->size = size;
 	data_count += sizeof(RingEntryHdr);
 
@@ -83,7 +83,17 @@ void* ring_get(RingMemPool* ring, unsigned size) {
 	ring->head  += data_count;
 	ring->last_err = RING_OK;
 
-	return start;
+	return start + sizeof(RingEntryHdr);
+}
+
+void* ring_peek(const RingMemPool* ring) {
+	// Do nothing if there's nothing to pop
+	if (ring->head == ring->tail) {
+		return NULL; // Nothing to pop
+	}
+
+	RingEntryHdr* hdr = &ring->memory[ring->tail];
+	return &ring->memory[ring->tail + sizeof(hdr)];
 }
 
 // Clear an entry from the ring
@@ -98,12 +108,12 @@ unsigned ring_pop(RingMemPool* ring) {
 	int size = hdr->size + sizeof(RingEntryHdr);
 
 	// Wrap tail if it has passed the wrap point
-	if (ring->tail + size >= ring->wrap_point) {
+	if (ring->wrap_point && ring->tail + size >= ring->wrap_point) {
 		ring->tail = 0;
 		ring->wrap_point = 0;
 	}
 	else {
-		ring->tail += size;
+		ring->tail = (ring->tail + size) % ring->size;
 	}
 
 	return hdr->size;

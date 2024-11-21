@@ -10,7 +10,6 @@
 #define RING_ERR -1
 #define RING_OUT_OF_MEM -2
 #define RING_CRITICAL -3
-
 typedef struct RingEntryHdr {
 	unsigned idx;
 	unsigned size;
@@ -28,6 +27,7 @@ typedef struct RingMemPool {
 void ring_init(RingMemPool* ring, void* memory, unsigned size);
 unsigned ring_remaining(const RingMemPool* ring);
 void* ring_get(RingMemPool* ring, unsigned size);
+void* ring_peek(const RingMemPool* ring);
 unsigned ring_pop(RingMemPool* ring);
 
 #endif // RING_MEM_POOL_H
