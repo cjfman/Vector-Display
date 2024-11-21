@@ -83,5 +83,40 @@ TEST(RingMemoryPool, getAndPopMany) {
         ASSERT_EQ(RING_OK, pool.last_err);
         EXPECT_EQ(pool.head, pool.tail);
         EXPECT_EQ(sizeof(buf), ring_remaining(&pool));
+        EXPECT_EQ(0u, ring_pop(&pool));
     }
+}
+
+TEST(RingMemoryPool, getManyThanPopMany) {
+    // Init pool
+    char buf[128];
+    RingMemPool pool;
+    ring_init(&pool, buf, sizeof(buf));
+    ASSERT_EQ(RING_OK, pool.last_err);
+
+    // Do this enough times to ensure no wrapping around the end of the buffer happens
+    for (int i = 0; i < 5; i++) {
+        // Get memory and set it
+        char* mem_in = (char*)ring_get(&pool, sizeof(i));
+        ASSERT_EQ(RING_OK, pool.last_err);
+        ASSERT_NOT_NULL(mem_in) << "Iteration " << i << ". Memory wasn't allocated";
+        memcpy(mem_in, (char*)&i, sizeof(i));
+    }
+
+    // Verify and pop memory
+    for (int i = 0; i < 5; i++) {
+        // Verify memory
+        char* mem_out = (char*)ring_peek(&pool);
+        ASSERT_NOT_NULL(mem_out);
+        ASSERT_EQ(i, *(int*)mem_out) << "Iteration " << i << ". Message was corrupted";
+
+        // Pop
+        EXPECT_EQ(sizeof(i), ring_pop(&pool));
+        ASSERT_EQ(RING_OK, pool.last_err);
+    }
+
+    // Final state
+    EXPECT_EQ(pool.head, pool.tail);
+    EXPECT_EQ(sizeof(buf), ring_remaining(&pool));
+    EXPECT_EQ(0u, ring_pop(&pool));
 }
