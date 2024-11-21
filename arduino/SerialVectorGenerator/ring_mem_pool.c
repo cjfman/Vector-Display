@@ -4,7 +4,7 @@
 #include "ring_mem_pool.h"
 
 // Initialize ring
-void ring_init(RingMemPool* ring, void* memory, unsigned size) {
+void ring_init(RingMemPool* ring, void* memory, int size) {
 	memset(ring, '\0', sizeof(RingMemPool));
 	ring->size     = size;
 	ring->memory   = memory;
@@ -13,7 +13,7 @@ void ring_init(RingMemPool* ring, void* memory, unsigned size) {
 
 // Check how much contiguous memory is available
 // Only a writer may call this
-unsigned ring_remaining(const RingMemPool* ring) {
+int ring_remaining(const RingMemPool* ring) {
 	if (ring->head == ring->tail) {
 		// The head and tail are pointing to the same location
 		// Either all the memory is available, or none of it is
@@ -46,7 +46,7 @@ unsigned ring_remaining(const RingMemPool* ring) {
 }
 
 // Get an entry onto the ring
-void* ring_get(RingMemPool* ring, unsigned size) {
+void* ring_get(RingMemPool* ring, int size) {
 	// Don't do anything for zero size
 	if (size == 0) {
 		ring->last_err = RING_OK;
@@ -54,19 +54,25 @@ void* ring_get(RingMemPool* ring, unsigned size) {
 	}
 
 	// Check remaining memory
-	if (ring_remaining(ring) < size + sizeof(RingEntryHdr)) {
+	int full_size = size + sizeof(RingEntryHdr);
+	if (ring_remaining(ring) < full_size) {
 		ring->last_err = RING_OUT_OF_MEM;
 		return NULL;
 	}
 
-	// If tail leads head, there are two places to put the data
+	// If tail trails or is at the head, there are two places to put the data
 	// Head may need to wrap if the data won't fit at the end
-	if (ring->tail > ring->head
-		&& ring->size - ring->head < size
-	) {
-		// Wrap head
-		ring->wrap_point = ring->head;
-		ring->head = 0;
+	if (ring->size - ring->head < full_size) {
+		if (ring->tail < ring->head) {
+			// Wrap head
+			ring->wrap_point = ring->head;
+			ring->head = 0;
+		}
+		else if (ring->tail == ring->head) {
+			// Move them both
+			ring->head = 0;
+			ring->tail = 0;
+		}
 	}
 
 	// Construct a header
@@ -80,9 +86,16 @@ void* ring_get(RingMemPool* ring, unsigned size) {
 	data_count += size;
 
 	// Update head and metadata
-	ring->head  += data_count;
-	ring->last_err = RING_OK;
+	ring->head += data_count;
+	if (ring->head >= ring->size) {
+		// This should never happen
+		ring->head = 0;
+		ring->tail = 0;
+		ring->last_err = RING_CRITICAL;
+		return 0;
+	}
 
+	ring->last_err = RING_OK;
 	return start + sizeof(RingEntryHdr);
 }
 
@@ -97,7 +110,7 @@ void* ring_peek(const RingMemPool* ring) {
 }
 
 // Clear an entry from the ring
-unsigned ring_pop(RingMemPool* ring) {
+int ring_pop(RingMemPool* ring) {
 	// Do nothing if there's nothing to pop
 	if (ring->head == ring->tail) {
 		return 0; // Nothing to pop
@@ -113,7 +126,14 @@ unsigned ring_pop(RingMemPool* ring) {
 		ring->wrap_point = 0;
 	}
 	else {
-		ring->tail = (ring->tail + size) % ring->size;
+		ring->tail += size;
+		if (ring->tail >= ring->size) {
+			// This should never happen
+			ring->head = 0;
+			ring->tail = 0;
+			ring->last_err = RING_CRITICAL;
+			return 0;
+		}
 	}
 
 	return hdr->size;

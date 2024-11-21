@@ -11,23 +11,23 @@
 #define RING_OUT_OF_MEM -2
 #define RING_CRITICAL -3
 typedef struct RingEntryHdr {
-	unsigned idx;
-	unsigned size;
+	int idx;
+	int size;
 } RingEntryHdr;
 
 typedef struct RingMemPool {
-	volatile unsigned size;
-	volatile unsigned head;
-	volatile unsigned tail;
-	volatile unsigned wrap_point;
+	volatile int size;
+	volatile int head;
+	volatile int tail;
+	volatile int wrap_point;
 	volatile int last_err;
 	void* memory;
 } RingMemPool;
 
-void ring_init(RingMemPool* ring, void* memory, unsigned size);
-unsigned ring_remaining(const RingMemPool* ring);
-void* ring_get(RingMemPool* ring, unsigned size);
+void ring_init(RingMemPool* ring, void* memory, int size);
+int ring_remaining(const RingMemPool* ring);
+void* ring_get(RingMemPool* ring, int size);
 void* ring_peek(const RingMemPool* ring);
-unsigned ring_pop(RingMemPool* ring);
+int ring_pop(RingMemPool* ring);
 
 #endif // RING_MEM_POOL_H

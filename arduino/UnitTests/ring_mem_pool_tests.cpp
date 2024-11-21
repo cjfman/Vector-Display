@@ -18,12 +18,12 @@ TEST(RingMemoryPool, init) {
     RingMemPool pool;
     ring_init(&pool, buf, sizeof(buf));
     EXPECT_EQ(RING_OK, pool.last_err);
-    EXPECT_EQ(128u,    pool.size);
-    EXPECT_EQ(0u,      pool.head);
-    EXPECT_EQ(0u,      pool.tail);
-    EXPECT_EQ(0u,      pool.wrap_point);
+    EXPECT_EQ(128,    pool.size);
+    EXPECT_EQ(0,      pool.head);
+    EXPECT_EQ(0,      pool.tail);
+    EXPECT_EQ(0,      pool.wrap_point);
     EXPECT_EQ(buf,     pool.memory);
-    EXPECT_EQ(128u,    ring_remaining(&pool));
+    EXPECT_EQ(128,    ring_remaining(&pool));
 }
 
 TEST(RingMemoryPool, getAndPopOne) {
@@ -53,7 +53,7 @@ TEST(RingMemoryPool, getAndPopOne) {
     ASSERT_EQ(RING_OK, pool.last_err);
     EXPECT_EQ(pool.head, pool.tail);
     EXPECT_EQ(sizeof(buf), ring_remaining(&pool));
-    EXPECT_EQ(0u, ring_pop(&pool));
+    EXPECT_EQ(0, ring_pop(&pool));
 }
 
 TEST(RingMemoryPool, getAndPopMany) {
@@ -63,7 +63,7 @@ TEST(RingMemoryPool, getAndPopMany) {
     ring_init(&pool, buf, sizeof(buf));
     ASSERT_EQ(RING_OK, pool.last_err);
 
-    // Do this enough times to ensure no wrapping around the end of the buffer happens
+    // Do this few enough times to ensure no wrapping around the end of the buffer happens
     const char msg[] = "0123456789";
     for (int i = 0; i < 5; i++) {
         // Get memory and set it
@@ -83,7 +83,38 @@ TEST(RingMemoryPool, getAndPopMany) {
         ASSERT_EQ(RING_OK, pool.last_err);
         EXPECT_EQ(pool.head, pool.tail);
         EXPECT_EQ(sizeof(buf), ring_remaining(&pool));
-        EXPECT_EQ(0u, ring_pop(&pool));
+        EXPECT_EQ(0, ring_pop(&pool));
+    }
+}
+
+TEST(RingMemoryPool, getAndPopManyWrap) {
+    // Init pool
+    char buf[128];
+    RingMemPool pool;
+    ring_init(&pool, buf, sizeof(buf));
+    ASSERT_EQ(RING_OK, pool.last_err);
+
+    // Do this enough times to ensure wrapping around the end of the buffer
+    const char msg[] = "0123456789";
+    for (int i = 0; i < 10; i++) {
+        // Get memory and set it
+        char* mem_in = (char*)ring_get(&pool, sizeof(msg));
+        ASSERT_EQ(RING_OK, pool.last_err);
+        ASSERT_NOT_NULL(mem_in) << "Iteration " << i << ". Memory wasn't allocated";
+        strcpy(mem_in, msg);
+
+        // Verify memory
+        char* mem_out = (char*)ring_peek(&pool);
+        ASSERT_NOT_NULL(mem_out);
+        ASSERT_EQ(mem_in, mem_out) << "Iteration " << i << ". Expected memory address to be the same";
+        ASSERT_EQ(0, strncmp(msg, mem_out, sizeof(msg))) << "Iteration " << i << ". Message was corrupted";
+
+        // Pop memory
+        EXPECT_EQ(sizeof(msg), ring_pop(&pool))       << "Iteration " << i;
+        ASSERT_EQ(RING_OK, pool.last_err)             << "Iteration " << i;
+        EXPECT_EQ(pool.head, pool.tail)               << "Iteration " << i;
+        EXPECT_EQ(sizeof(buf), ring_remaining(&pool)) << "Iteration " << i;
+        EXPECT_EQ(0, ring_pop(&pool))                << "Iteration " << i;
     }
 }
 
@@ -118,5 +149,5 @@ TEST(RingMemoryPool, getManyThanPopMany) {
     // Final state
     EXPECT_EQ(pool.head, pool.tail);
     EXPECT_EQ(sizeof(buf), ring_remaining(&pool));
-    EXPECT_EQ(0u, ring_pop(&pool));
+    EXPECT_EQ(0, ring_pop(&pool));
 }
