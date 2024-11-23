@@ -14,6 +14,9 @@ void ring_init(RingMemPool* ring, void* memory, int size) {
 // Check how much contiguous memory is available
 // Only a writer may call this
 int ring_remaining(const RingMemPool* ring) {
+	// Error guard
+	if (ring->last_err == RING_CRITICAL) return 0;
+
 	if (ring->head == ring->tail) {
 		// The head and tail are pointing to the same location
 		// Either all the memory is available, or none of it is
@@ -47,6 +50,9 @@ int ring_remaining(const RingMemPool* ring) {
 
 // Get an entry onto the ring
 void* ring_get(RingMemPool* ring, int size) {
+	// Error guard
+	if (ring->last_err == RING_CRITICAL) return NULL;
+
 	// Don't do anything for zero size
 	if (size == 0) {
 		ring->last_err = RING_OK;
@@ -100,6 +106,9 @@ void* ring_get(RingMemPool* ring, int size) {
 }
 
 void* ring_peek(const RingMemPool* ring) {
+	// Error guard
+	if (ring->last_err == RING_CRITICAL) return 0;
+
 	// Do nothing if there's nothing to pop
 	if (ring->head == ring->tail) {
 		return NULL; // Nothing to pop
@@ -111,8 +120,12 @@ void* ring_peek(const RingMemPool* ring) {
 
 // Clear an entry from the ring
 int ring_pop(RingMemPool* ring) {
+	// Error guard
+	if (ring->last_err == RING_CRITICAL) return 0;
+
 	// Do nothing if there's nothing to pop
 	if (ring->head == ring->tail) {
+		ring->last_err = RING_OK;
 		return 0; // Nothing to pop
 	}
 
@@ -136,5 +149,6 @@ int ring_pop(RingMemPool* ring) {
 		}
 	}
 
+	ring->last_err = RING_OK;
 	return hdr->size;
 }
