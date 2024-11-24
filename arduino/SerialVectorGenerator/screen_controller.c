@@ -1,4 +1,4 @@
-#include <Math.h>
+#include <math.h>
 #include <util/atomic.h>
 
 #include "ring_mem_pool.h"
@@ -105,7 +105,7 @@ int screen_push_line(const LineCmd* cmd) {
 			motion->y2 = cmd->y2;
 
 			// Calculate length
-			motion->length = sqrt(sq(cmd->x2 - cmd->x1) + sq(cmd->y2 - cmd->y1));
+			motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
 		}
 	}
 	return success;
