@@ -14,15 +14,15 @@ const char* cmd_set[Cmd_Num] = {
 };
 
 // Ring buffer
-char cmd_buf[CMD_BUF_SIZE];
-int cmd_buf_len = 0;
+static char cmd_buf[CMD_BUF_SIZE];
+static int cmd_buf_len = 0;
 
 void clearCache(void) {
     cmd_buf_len = 0;
 }
 
 // And a command to the buffer
-int buildCmd(char* new_cmd, int len) {
+int buildCmd(const char* new_cmd, int len) {
     // Check size
     if (len + cmd_buf_len > CMD_BUF_SIZE - 1) {
         // Buffer overrun
@@ -145,14 +145,17 @@ int getCmd(char* buf, int buf_len) {
     return 0;
 }
 
+// Command decoder functer type
+typedef int (*DecodeFn)(Command *);
+
 // Decode a scale command
 int cmdDecodeScale(ScaleCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x_scale  = atoi(base->args[0]);
-	cmd->y_scale  = atoi(base->args[1]);
-	cmd->x_offset = atoi(base->args[2]);
-	cmd->y_offset = atoi(base->args[3]);
+	cmd->x_scale  = atoi(base->args[1]);
+	cmd->y_scale  = atoi(base->args[2]);
+	cmd->x_offset = atoi(base->args[3]);
+	cmd->y_offset = atoi(base->args[4]);
 	return CMD_OK;
 }
 
@@ -160,30 +163,33 @@ int cmdDecodeScale(ScaleCmd* cmd) {
 int cmdDecodePoint(PointCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x = atoi(base->args[0]);
-	cmd->y = atoi(base->args[1]);
+	cmd->x = atoi(base->args[1]);
+	cmd->y = atoi(base->args[2]);
+	return CMD_OK;
 }
 
 // Decode a line command
 int cmdDecodeLine(LineCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x1 = atoi(base->args[0]);
-	cmd->y1 = atoi(base->args[1]);
-	cmd->x2 = atoi(base->args[2]);
-	cmd->y2 = atoi(base->args[3]);
+	cmd->x1 = atoi(base->args[1]);
+	cmd->y1 = atoi(base->args[2]);
+	cmd->x2 = atoi(base->args[3]);
+	cmd->y2 = atoi(base->args[4]);
+	return CMD_OK;
 }
 
 // Parse a command line
 int cmdParse(CommandUnion* cmd, char* buf, int len) {
 	// Command arguments are space separated
+	memset(cmd, '\0', sizeof(CommandUnion));
     int count = 0;
 	char* cmd_start = buf;
 	int i;
     for (i = 0; i < len; i++) {
         if (buf[i] == ' ') {
 			// Trim off leading spaces
-			if (count == 0) {
+			if (cmd_start[0] == ' ') {
 				cmd_start += 1;
 				continue;
 			}
@@ -196,6 +202,7 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
             // Pointer to argument
             cmd->base.args[count++] = &buf[++i];
         }
+		if (buf[i] == '\0') break;
     }
     if (!count) return CMD_ERR_WRONG_NUM_ARGS;
 
@@ -204,24 +211,20 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
     cmd->base.numargs = count;
 
     // Get cmd type
-	int (*decode_fn)(Command* cmd) = NULL;
-	int cmd_size = 0;
-    if (strcmp(cmd_set[Cmd_Scale], buf) == 0) {
+    int (*decode_fn)(Command* cmd) = NULL;
+    if (strcmp(cmd_set[Cmd_Scale], cmd_start) == 0) {
         cmd->base.type = Cmd_Scale;
-		decode_fn = cmdDecodeScale;
-		cmd_size  = sizeof(ScaleCmd);
+		decode_fn = (DecodeFn)cmdDecodeScale;
     }
-	else if (strcmp(cmd_set[Cmd_Point], buf) == 0) {
+	else if (strcmp(cmd_set[Cmd_Point], cmd_start) == 0) {
         cmd->base.type = Cmd_Point;
-		decode_fn = cmdDecodePoint;
-		cmd_size  = sizeof(PointCmd);
+		decode_fn = (DecodeFn)cmdDecodePoint;
     }
-	else if (strcmp(cmd_set[Cmd_Line], buf) == 0) {
+	else if (strcmp(cmd_set[Cmd_Line], cmd_start) == 0) {
         cmd->base.type = Cmd_Line;
-		decode_fn = cmdDecodeLine;
-		cmd_size  = sizeof(LineCmd);
+		decode_fn = (DecodeFn)cmdDecodeLine;
     }
-	else if (strcmp(cmd_set[Cmd_Noop], buf) == 0) {
+	else if (strcmp(cmd_set[Cmd_Noop], cmd_start) == 0) {
         cmd->base.type = Cmd_Noop;
     }
     else {
@@ -230,7 +233,7 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
 
 	// Process command
 	if (decode_fn) {
-		decode_fn(cmd);
+		return decode_fn((Command*)cmd);
 	}
 
     return CMD_OK;
@@ -256,8 +259,6 @@ const char* cmdErrToText(int errcode) {
         return "Wrong number of arguments";
     case CMD_ERR_PARSE:
         return "Parse error";
-    case CMD_ERR_TOKEN:
-        return "Token error";
     default:
         return "Unknown command error";
     }

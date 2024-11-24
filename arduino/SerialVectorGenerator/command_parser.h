@@ -16,7 +16,6 @@
 #define CMD_ERR_TOO_MANY_ARGS -6
 #define CMD_ERR_WRONG_NUM_ARGS -7
 #define CMD_ERR_PARSE -8
-#define CMD_ERR_TOKEN -9
 
 typedef enum CommandType {
 	Cmd_Scale,
@@ -43,13 +42,6 @@ typedef enum CommandType {
 //       x2: End position x-dimention
 //       y2: End position y-dimention
 //       ms: Time in milliseconds to get to that position
-
-typedef enum CommandParseState {
-    Start,
-    Idle,
-    TokenStart,
-    Token,
-} CommandParseState;
 
 typedef struct Command {
     char* buf;
@@ -88,7 +80,7 @@ typedef union CmdUnion {
 } CommandUnion;
 
 void clearCache(void);
-int buildCmd(char* new_cmd, int len);
+int buildCmd(const char* new_cmd, int len);
 int commandSize(void);
 int noopCommand(void);
 int commandComplete(void);

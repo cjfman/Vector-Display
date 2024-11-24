@@ -52,7 +52,7 @@ TEST(RingMemoryPool, getAndPopOne) {
     EXPECT_EQ(sizeof(msg), (unsigned)ring_pop(&pool));
     ASSERT_EQ(RING_OK, pool.last_err);
     EXPECT_EQ(pool.head, pool.tail);
-    EXPECT_EQ(sizeof(buf), ring_remaining(&pool));
+    EXPECT_EQ(sizeof(buf), (unsigned)ring_remaining(&pool));
     EXPECT_EQ(0, ring_pop(&pool));
 }
 
