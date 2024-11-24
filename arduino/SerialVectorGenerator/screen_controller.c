@@ -8,8 +8,6 @@
 #define SCREEN_MIN_VALUE 0
 #define SCREEN_WIDTH (SCREEN_MAX_VALUE - SCREEN_MIN_VALUE)
 
-char motion_mem[1<<10];
-RingMemPool motion_pool = {0};
 ScreenState main_screen = {0};
 
 static inline int abs_int(int val) {
@@ -64,18 +62,17 @@ int nextBeamState(int elapsed, const ScreenMotion* motion, const ScreenState* sc
 }
 
 void screen_init(void) {
-    ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
 	memset(&main_screen, '\0', sizeof(main_screen));
 	main_screen.x_scale = 100;
 	main_screen.y_scale = 100;
 	main_screen.speed   = 100000; // 100 ms
 }
 
-int screen_push_point(const PointCmd* cmd) {
+int screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
 	int success;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 		// Allocate object from the pool
-		PointMotion* motion = ring_get(&motion_pool, sizeof(PointMotion));
+		PointMotion* motion = ring_get(pool, sizeof(PointMotion));
 		if (!motion) {
 			success = 0;
 		}
@@ -89,11 +86,11 @@ int screen_push_point(const PointCmd* cmd) {
 	return success;
 }
 
-int screen_push_line(const LineCmd* cmd) {
+int screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
 	int success;
 	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
 		// Allocate object from the pool
-		LineMotion* motion = ring_get(&motion_pool, sizeof(LineMotion));
+		LineMotion* motion = ring_get(pool, sizeof(LineMotion));
 		if (!motion) {
 			success = 0;
 		}
@@ -118,12 +115,12 @@ void screen_set_scale(const ScaleCmd* cmd) {
 	}
 }
 
-void update_screen(long time) {
+void update_screen(long time, RingMemPool* pool) {
 	long elapsed = time - main_screen.last_update;
 	main_screen.last_update = time;
 
 	// Get motion
-	ScreenMotion* motion = ring_peek(&motion_pool);
+	ScreenMotion* motion = ring_peek(pool);
 	if (!motion) {
 		return;
 	}
@@ -131,7 +128,7 @@ void update_screen(long time) {
 	// Determine new beam position
 	BeamState state;
 	nextBeamState(elapsed, motion, &main_screen, &state);
-	ring_pop(&motion_pool);
+	ring_pop(pool);
 
 	// TODO Update screen hardware
 }
