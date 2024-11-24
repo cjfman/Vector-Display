@@ -15,10 +15,10 @@ protected:
         memset(this->cmd_buf, '\0', sizeof(this->cmd_buf));
     }
     void build_command(const char* cmd_str, unsigned size) {
-        ASSERT_EQ(CMD_OK, buildCmd(cmd_str, size));
+        ASSERT_EQ(CMD_OK, buildCmd((std::string(cmd_str) + "\r\n").data(), size));
         ASSERT_TRUE(commandComplete());
         ASSERT_EQ(CMD_OK, getCmd(this->cmd_buf, CMD_BUF_SIZE));
-        ASSERT_EQ(std::string(cmd_str), std::string(this->cmd_buf) + "\r\n");
+        ASSERT_EQ(std::string(cmd_str), std::string(this->cmd_buf));
     }
 
     char cmd_buf[CMD_BUF_SIZE];
@@ -26,7 +26,7 @@ protected:
 
 TEST_F(CommandParserTest, scale) {
     // Send and parse command
-    const char cmd_str[] = "scale 44 87 -5 4\r\n";
+    const char cmd_str[] = "scale 44 87 -5 4";
     this->build_command(cmd_str, sizeof(cmd_str));
     CommandUnion cmd;
     ASSERT_EQ(CMD_OK, cmdParse(&cmd, this->cmd_buf, CMD_BUF_SIZE))
@@ -43,7 +43,7 @@ TEST_F(CommandParserTest, scale) {
 
 TEST_F(CommandParserTest, point) {
     // Send and parse command
-    const char cmd_str[] = "point 42 -5\r\n";
+    const char cmd_str[] = "point 42 -5";
     this->build_command(cmd_str, sizeof(cmd_str));
     CommandUnion cmd;
     ASSERT_EQ(CMD_OK, cmdParse(&cmd, this->cmd_buf, CMD_BUF_SIZE))
@@ -58,7 +58,7 @@ TEST_F(CommandParserTest, point) {
 
 TEST_F(CommandParserTest, line) {
     // Send and parse command
-    const char cmd_str[] = "line -2 0 452 87\r\n";
+    const char cmd_str[] = "line -2 0 452 87";
     this->build_command(cmd_str, sizeof(cmd_str));
     CommandUnion cmd;
     ASSERT_EQ(CMD_OK, cmdParse(&cmd, this->cmd_buf, CMD_BUF_SIZE))
