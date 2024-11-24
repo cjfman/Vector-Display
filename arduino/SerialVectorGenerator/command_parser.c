@@ -1,3 +1,5 @@
+#include <stdio.h> // XXX
+
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
@@ -152,10 +154,10 @@ typedef int (*DecodeFn)(Command *);
 int cmdDecodeScale(ScaleCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x_scale  = atoi(base->args[1]);
-	cmd->y_scale  = atoi(base->args[2]);
-	cmd->x_offset = atoi(base->args[3]);
-	cmd->y_offset = atoi(base->args[4]);
+	cmd->x_scale  = atoi(base->args[0]);
+	cmd->y_scale  = atoi(base->args[1]);
+	cmd->x_offset = atoi(base->args[2]);
+	cmd->y_offset = atoi(base->args[3]);
 	return CMD_OK;
 }
 
@@ -163,8 +165,8 @@ int cmdDecodeScale(ScaleCmd* cmd) {
 int cmdDecodePoint(PointCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x = atoi(base->args[1]);
-	cmd->y = atoi(base->args[2]);
+	cmd->x = atoi(base->args[0]);
+	cmd->y = atoi(base->args[1]);
 	return CMD_OK;
 }
 
@@ -172,10 +174,10 @@ int cmdDecodePoint(PointCmd* cmd) {
 int cmdDecodeLine(LineCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x1 = atoi(base->args[1]);
-	cmd->y1 = atoi(base->args[2]);
-	cmd->x2 = atoi(base->args[3]);
-	cmd->y2 = atoi(base->args[4]);
+	cmd->x1 = atoi(base->args[0]);
+	cmd->y1 = atoi(base->args[1]);
+	cmd->x2 = atoi(base->args[2]);
+	cmd->y2 = atoi(base->args[3]);
 	return CMD_OK;
 }
 

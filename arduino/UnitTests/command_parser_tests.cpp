@@ -40,3 +40,18 @@ TEST_F(CommandParserTest, scale) {
     EXPECT_EQ(-5,  scale_cmd->x_offset);
     EXPECT_EQ(4,   scale_cmd->y_offset);
 }
+
+TEST_F(CommandParserTest, point) {
+    // Send and parse command
+    const char cmd_str[] = "point 42 -5\r\n";
+    this->build_command(cmd_str, sizeof(cmd_str));
+    CommandUnion cmd;
+    ASSERT_EQ(CMD_OK, cmdParse(&cmd, this->cmd_buf, CMD_BUF_SIZE))
+        << "Base command: " << cmd.base.buf << "; Num args: " << cmd.base.numargs;
+
+    // Check parsed command
+    ASSERT_EQ(Cmd_Point, cmd.base.type);
+    PointCmd* point_cmd = (PointCmd*)&cmd;
+    EXPECT_EQ(42, point_cmd->x);
+    EXPECT_EQ(-5, point_cmd->y);
+}
