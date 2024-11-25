@@ -26,13 +26,13 @@ USER_DIR =../SerialVectorGenerator
 TESTS =                             \
 		ring_mem_pool_tests.cpp     \
 		command_parser_tests.cpp    \
-	    #screen_controller_tests.cpp \
+	    screen_controller_tests.cpp \
 
 # All of the sources I want compiled
 SRC =                     \
 	  ring_mem_pool.c     \
 	  command_parser.c    \
-	  #screen_controller.c \
+	  screen_controller.c \
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that

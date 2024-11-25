@@ -1,11 +1,11 @@
 #include <math.h>
-#include <util/atomic.h>
+#include <string.h>
 
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
 
-#define SCREEN_MAX_VALUE 128
-#define SCREEN_MIN_VALUE 0
+#define SCREEN_MAX_VALUE 128l
+#define SCREEN_MIN_VALUE 0l
 #define SCREEN_WIDTH (SCREEN_MAX_VALUE - SCREEN_MIN_VALUE)
 
 ScreenState main_screen = {0};
@@ -39,7 +39,7 @@ void calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, 
 	// Rate = screen->speed / SCREEN_WIDTH
 	// Completed = distance / length
 	long completed_nom   = (long)screen->speed * elapsed;
-	long completed_denom = (long)SCREEN_WIDTH  * motion->length;
+	long completed_denom = SCREEN_WIDTH * motion->length;
 	int x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
 	int y = (motion->y2 - motion->y1) * completed_nom / completed_denom;
 	calcPointHelper(x, y, screen, beam);
@@ -48,10 +48,10 @@ void calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, 
 int nextBeamState(int elapsed, const ScreenMotion* motion, const ScreenState* screen, BeamState* beam) {
 	switch (motion->type) {
 	case SM_Point:
-		calcPoint(motion, screen, beam);
+		calcPoint((PointMotion*)motion, screen, beam);
 		break;
 	case SM_Line:
-		calcLine(elapsed, motion, screen, beam);
+		calcLine(elapsed, (LineMotion*)motion, screen, beam);
 		break;
 	default:
 		beam->x = 0;
@@ -70,49 +70,46 @@ void screen_init(void) {
 
 int screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
 	int success;
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-		// Allocate object from the pool
-		PointMotion* motion = ring_get(pool, sizeof(PointMotion));
-		if (!motion) {
-			success = 0;
-		}
-		else {
-			// Populate motion
-			motion->x = cmd->x;
-			motion->y = cmd->y;
-			success = 1;
-		}
+	// Allocate object from the pool
+	PointMotion* motion = ring_get(pool, sizeof(PointMotion));
+	if (!motion) {
+		success = 0;
+	}
+	else {
+		// Populate motion
+		motion->base.type = SM_Point;
+		motion->x = cmd->x;
+		motion->y = cmd->y;
+		success = 1;
 	}
 	return success;
 }
 
 int screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
 	int success;
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-		// Allocate object from the pool
-		LineMotion* motion = ring_get(pool, sizeof(LineMotion));
-		if (!motion) {
-			success = 0;
-		}
-		else {
-			// Populate motion
-			motion->x1 = cmd->x1;
-			motion->y1 = cmd->y1;
-			motion->x2 = cmd->x2;
-			motion->y2 = cmd->y2;
+	// Allocate object from the pool
+	LineMotion* motion = ring_get(pool, sizeof(LineMotion));
+	if (!motion) {
+		success = 0;
+	}
+	else {
+		// Populate motion
+		motion->base.type = SM_Line;
+		motion->x1 = cmd->x1;
+		motion->y1 = cmd->y1;
+		motion->x2 = cmd->x2;
+		motion->y2 = cmd->y2;
 
-			// Calculate length
-			motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
-		}
+		// Calculate length
+		motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
+		success = 1;
 	}
 	return success;
 }
 
 void screen_set_scale(const ScaleCmd* cmd) {
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-		main_screen.x_scale = cmd->x_scale;
-		main_screen.y_scale = cmd->y_scale;
-	}
+	main_screen.x_scale = cmd->x_scale;
+	main_screen.y_scale = cmd->y_scale;
 }
 
 void update_screen(long time, RingMemPool* pool) {
