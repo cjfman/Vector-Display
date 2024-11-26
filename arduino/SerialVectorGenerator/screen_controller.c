@@ -49,8 +49,8 @@ void calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, 
 	// Rate = screen->speed / SCREEN_WIDTH
 	// Completed = distance / length
 	// TODO Should these be floats?
-	long completed_nom   = screen->speed * elapsed;
-	long completed_denom = screen->x_width * motion->length;
+	long completed_nom   = (long)screen->speed * elapsed;
+	long completed_denom = (long)screen->x_width * motion->length;
 	beam->x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
 	beam->y = (motion->y2 - motion->y1) * completed_nom / completed_denom;
 	beam->a = 1;

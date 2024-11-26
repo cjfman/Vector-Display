@@ -3,8 +3,8 @@
 #include "command_parser.h"
 
 static inline String printScale(const ScaleCmd* cmd) {
-	return String("scale x_scale: ") + cmd->x_scale
-		+ " y_scale: "  + cmd->y_scale
+	return String("scale x_width: ") + cmd->x_width
+		+ " y_width: "  + cmd->y_width
 		+ " x_offset: " + cmd->x_offset
 		+ " y_offset: " + cmd->y_offset;
 }
