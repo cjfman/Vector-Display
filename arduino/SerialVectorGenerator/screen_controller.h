@@ -10,8 +10,8 @@ typedef struct BeamState {
 } BeamState;
 
 typedef struct ScreenState {
-	int x_scale;
-	int y_scale;
+	int x_width;
+	int y_width;
 	int x_offset;
 	int y_offset;
 	unsigned long speed; 	   // Time to cross the width of the screen in us

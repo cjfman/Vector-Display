@@ -23,8 +23,8 @@
 //
 //static void calcPointHelper(int x, int y, const ScreenState* screen, BeamState* beam) {
 //	// Scale and offset position
-//	beam->x = SCREEN_WIDTH * get_abs_pos(x, screen->x_scale, screen->x_offset) / screen->x_scale - SCREEN_MIN_VALUE;
-//	beam->y = SCREEN_WIDTH * get_abs_pos(y, screen->y_scale, screen->y_offset) / screen->y_scale - SCREEN_MIN_VALUE;
+//	beam->x = SCREEN_WIDTH * get_abs_pos(x, screen->x_width, screen->x_offset) / screen->x_width - SCREEN_MIN_VALUE;
+//	beam->y = SCREEN_WIDTH * get_abs_pos(y, screen->y_width, screen->y_offset) / screen->y_width - SCREEN_MIN_VALUE;
 //	beam->a = 1;
 //}
 
@@ -40,7 +40,7 @@ void calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, 
 	// Completed = distance / length
 	// TODO Should these be floats?
 	long completed_nom   = screen->speed * elapsed;
-	long completed_denom = screen->x_scale * motion->length;
+	long completed_denom = screen->x_width * motion->length;
 	beam->x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
 	beam->y = (motion->y2 - motion->y1) * completed_nom / completed_denom;
 	beam->a = 1;
@@ -64,8 +64,8 @@ int nextBeamState(int elapsed, const ScreenMotion* motion, const ScreenState* sc
 
 void screen_init(ScreenState* screen) {
 	memset(screen, '\0', sizeof(ScreenState));
-	screen->x_scale = 100;
-	screen->y_scale = 100;
+	screen->x_width = 100;
+	screen->y_width = 100;
 	screen->speed   = 100000; // 100 ms
 }
 
@@ -109,8 +109,8 @@ int screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
 }
 
 void screen_set_scale(ScreenState* screen, const ScaleCmd* cmd) {
-	screen->x_scale = cmd->x_scale;
-	screen->y_scale = cmd->y_scale;
+	screen->x_width = cmd->x_width;
+	screen->y_width = cmd->y_width;
 }
 
 void update_screen(long time, ScreenState* screen, RingMemPool* pool) {

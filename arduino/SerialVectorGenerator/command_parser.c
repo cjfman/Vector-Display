@@ -154,8 +154,8 @@ typedef int (*DecodeFn)(Command *);
 int cmdDecodeScale(ScaleCmd* cmd) {
 	const Command* base = &cmd->base;
 	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x_scale  = atoi(base->args[0]);
-	cmd->y_scale  = atoi(base->args[1]);
+	cmd->x_width  = atoi(base->args[0]);
+	cmd->y_width  = atoi(base->args[1]);
 	cmd->x_offset = atoi(base->args[2]);
 	cmd->y_offset = atoi(base->args[3]);
 	return CMD_OK;

@@ -27,11 +27,11 @@ typedef enum CommandType {
 
 // Command formats
 // Scale: Set the scale for the dimentions
-//        scale x_scale y_scale x_offset y_offset
-//        x_scale: Number that represents distance between center and edge of x-dimention
-//        y_scale: Number that represents distance between center and edge of y-dimention
-//        x_offset: Sets zero point for x-dimention. 0 is center of the screen. -x_scale is left edge
-//        y_offset: Sets zero point for y-dimention. 0 is center of the screen. -y_scale is bottom edge
+//        scale x_width y_width x_offset y_offset
+//        x_width: Number that represents distance between center and edge of x-dimention
+//        y_width: Number that represents distance between center and edge of y-dimention
+//        x_offset: Sets zero point for x-dimention. 0 is center of the screen. -x_width is left edge
+//        y_offset: Sets zero point for y-dimention. 0 is center of the screen. -y_width is bottom edge
 //  
 // Set: Set the position on the screen
 //      set x y
@@ -52,8 +52,8 @@ typedef struct Command {
 
 typedef struct ScaleCmd {
 	Command base;
-	unsigned x_scale;
-	unsigned y_scale;
+	unsigned x_width;
+	unsigned y_width;
 	int x_offset;
 	int y_offset;
 } ScaleCmd;
