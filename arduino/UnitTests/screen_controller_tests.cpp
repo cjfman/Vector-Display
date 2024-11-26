@@ -89,12 +89,11 @@ TEST_F(ScreenControllerTest, lineShifted) {
 }
 
 TEST_F(ScreenControllerTest, updateScreenPoint) {
-    // Test the corners with default settings
-    // A scale of 100, no offsets
+    // Defaults are 100 width, 0 offset, 100ms speed, 1ms hold
     PointCmd cmd = {
         {}, // base
-        54,  // x
-        81,  // y
+        54, // x
+        81, // y
     };
     screen_push_point(&this->pool, &cmd);
     update_screen(0, &this->screen, &this->pool);
@@ -110,11 +109,30 @@ TEST_F(ScreenControllerTest, updateScreenPoint) {
     cmd.x = 25;
     cmd.y = 9;
     screen_push_point(&this->pool, &cmd);
-    update_screen(0, &this->screen, &this->pool);
+    update_screen(1000, &this->screen, &this->pool);
     EXPECT_EQ(1, this->screen.beam.a);
     EXPECT_EQ(25, this->screen.beam.x);
     EXPECT_EQ(9, this->screen.beam.y);
 
+    // Progress time by 500us
+    update_screen(1500, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(25, this->screen.beam.x);
+    EXPECT_EQ(9, this->screen.beam.y);
+
+    // Progress time by 999us
+    update_screen(1999, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(25, this->screen.beam.x);
+    EXPECT_EQ(9, this->screen.beam.y);
+
+    // Progress time by 1us
+    update_screen(2000, &this->screen, &this->pool);
+    EXPECT_EQ(0, this->screen.beam.a);
+
+    // Progress time by > 1us
+    update_screen(2000, &this->screen, &this->pool);
+    EXPECT_EQ(0, this->screen.beam.a);
 }
 
 TEST_F(ScreenControllerTest, updateScreenBounds) {
@@ -135,6 +153,7 @@ TEST_F(ScreenControllerTest, updateScreenBounds) {
     EXPECT_EQ(1,   this->screen.beam.a);
     EXPECT_EQ(-20, this->screen.beam.x) << "X was below bounds";
     EXPECT_EQ(10,  this->screen.beam.y);
+    ring_pop(&this->pool);
 
     // X is above bounds
     cmd.x = 110;
@@ -144,6 +163,7 @@ TEST_F(ScreenControllerTest, updateScreenBounds) {
     EXPECT_EQ(1,  this->screen.beam.a);
     EXPECT_EQ(30, this->screen.beam.x) << "X was above bounds";
     EXPECT_EQ(-1, this->screen.beam.y);
+    ring_pop(&this->pool);
 
     // Y is below bounds
     cmd.x = 0;
@@ -153,6 +173,7 @@ TEST_F(ScreenControllerTest, updateScreenBounds) {
     EXPECT_EQ(1,   this->screen.beam.a);
     EXPECT_EQ(0, this->screen.beam.x) << "X was below bounds";
     EXPECT_EQ(-9,  this->screen.beam.y);
+    ring_pop(&this->pool);
 
     // Y is above bounds
     cmd.x = -1;
@@ -162,4 +183,19 @@ TEST_F(ScreenControllerTest, updateScreenBounds) {
     EXPECT_EQ(1,  this->screen.beam.a);
     EXPECT_EQ(-1, this->screen.beam.x) << "X was above bounds";
     EXPECT_EQ(77, this->screen.beam.y);
+    ring_pop(&this->pool);
 }
+
+/*
+TEST_F(ScreenControllerTest, updateScreenLine) {
+    LineCmd cmd {
+        {}, // base
+        0,  // x1
+        0,  // y1
+        30, // x2
+        40, // y2
+    };
+    screen_push_line(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+}
+*/

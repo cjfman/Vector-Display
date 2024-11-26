@@ -38,50 +38,68 @@
 //	beam->a = 1;
 //}
 
-static void calcPoint(const PointMotion* motion, BeamState* beam) {
+static int calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
+	if (elapsed >= screen->hold_time) {
+		// Motion is complete
+		return 0;
+	}
 	beam->x = motion->x;
 	beam->y = motion->y;
 	beam->a = 1;
+	return 1;
 }
 
-void calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+static int calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
 	// Dert: Distance = Rate * time
-	// Rate = screen->speed / SCREEN_WIDTH
-	// Completed = distance / length
-	// TODO Should these be floats?
-	long completed_nom   = (long)screen->speed * elapsed;
-	long completed_denom = (long)screen->x_width * motion->length;
-	beam->x = (motion->x2 - motion->x1) * completed_nom / completed_denom;
-	beam->y = (motion->y2 - motion->y1) * completed_nom / completed_denom;
-	beam->a = 1;
-}
-
-int nextBeamState(int elapsed, const ScreenMotion* motion, const ScreenState* screen, BeamState* beam) {
-	switch (motion->type) {
-	case SM_Point:
-		calcPoint((PointMotion*)motion, beam);
-		break;
-	case SM_Line:
-		calcLine(elapsed, (LineMotion*)motion, screen, beam);
-		break;
-	default:
-		beam->x = 0;
-		beam->y = 0;
-		beam->a = 0;
+	long moved = screen->speed * elapsed;
+	if (moved >= motion->length) {
+		// Motion is complete
+		return 0;
 	}
 
-	// Bounds check
-	beam->x = max(min(beam->x, screen->x_width - screen->x_offset), -screen->x_offset);
-	beam->y = max(min(beam->y, screen->y_width - screen->y_offset), -screen->y_offset);
-	
+	// Calculate movement in each dimention
+	beam->x = (motion->x2 - motion->x1) * moved / motion->length;
+	beam->y = (motion->y2 - motion->y1) * moved / motion->length;
+	beam->a = 1;
 	return 1;
+}
+
+int nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen) {
+	BeamState beam;
+	int active;
+	switch (motion->type) {
+	case SM_Point:
+		active = calcPoint(elapsed, (PointMotion*)motion, screen, &beam);
+		break;
+	case SM_Line:
+		active = calcLine(elapsed, (LineMotion*)motion, screen, &beam);
+		break;
+	default:
+		active = 0;
+		beam.x = 0;
+		beam.y = 0;
+		beam.a = 0;
+	}
+
+	if (active) {
+		// Bounds check
+		beam.x = max(min(beam.x, screen->x_width - screen->x_offset), -screen->x_offset);
+		beam.y = max(min(beam.y, screen->y_width - screen->y_offset), -screen->y_offset);
+		screen->beam = beam;
+	}
+	else {
+		screen->beam.a = 0;
+	}
+	
+	return active;
 }
 
 void screen_init(ScreenState* screen) {
 	memset(screen, '\0', sizeof(ScreenState));
-	screen->x_width = 100;
-	screen->y_width = 100;
-	screen->speed   = 100000; // 100 ms
+	screen->x_width   = 100;
+	screen->y_width   = 100;
+	screen->speed     = 100000; // 100 ms
+	screen->hold_time = 1000;   // 1 ms
 }
 
 int screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
@@ -129,20 +147,34 @@ void screen_set_scale(ScreenState* screen, const ScaleCmd* cmd) {
 }
 
 void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
-	long elapsed = time - screen->last_update;
-	screen->last_update = time;
+	long elapsed = time - screen->motion_start;
 
-	// Get motion
+	// Get the current motion
 	ScreenMotion* motion = ring_peek(pool);
 	if (!motion) {
 		return;
 	}
 
-	// Determine new beam position
-	BeamState beam;
-	nextBeamState(elapsed, motion, screen, &beam);
-	screen->beam = beam;
-	ring_pop(pool);
+	// Check for active motion
+	if (screen->motion_active) {
+		// Get the next motion
+		if (nextBeamState(elapsed, motion, screen)) {
+			// Current motion is still active
+			return;
+		}
+		// Motion has completed
+		ring_pop(pool);
+		screen->motion_active = 0;
+	}
 
-	// TODO Update screen hardware
+	// Get the next motion
+	motion = ring_peek(pool);
+	if (!motion) {
+		return;
+	}
+
+	// Determine new beam position
+	screen->motion_active = 1;
+	screen->motion_start = time;
+	nextBeamState(0, motion, screen);
 }

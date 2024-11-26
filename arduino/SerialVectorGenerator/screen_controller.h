@@ -9,17 +9,8 @@ typedef struct BeamState {
 	int a; // Active
 } BeamState;
 
-typedef struct ScreenState {
-	int x_width;
-	int y_width;
-	int x_offset;
-	int y_offset;
-	unsigned long speed; 	   // Time to cross the width of the screen in us
-	unsigned long last_update; // Time of last update
-	BeamState beam;
-} ScreenState;
-
 typedef enum ScreenMotionType {
+	SM_None = 0,
 	SM_Point,
 	SM_Line,
 } ScreenMotionType;
@@ -43,7 +34,19 @@ typedef struct LineMotion {
 	int length; // Should this be a float?
 } LineMotion;
 
-int nextBeamState(const int elapsed, const ScreenMotion* cmd, const ScreenState* screen, BeamState* beam);
+typedef struct ScreenState {
+	int x_width;
+	int y_width;
+	int x_offset;
+	int y_offset;
+	long hold_time;    // Time to hold a point
+	int speed;    	   // Points moved in a us
+	long motion_start; // Time when current motion started
+	BeamState beam;
+	int motion_active;
+} ScreenState;
+
+int nextBeamState(const int elapsed, const ScreenMotion* cmd, ScreenState* screen);
 void screen_init(ScreenState* screen);
 int screen_push_point(RingMemPool* pool, const PointCmd* cmd);
 int screen_push_line(RingMemPool* pool, const LineCmd* cmd);
