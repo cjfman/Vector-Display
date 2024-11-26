@@ -8,6 +8,7 @@ extern "C" {
 
 char motion_mem[1<<10];
 RingMemPool motion_pool = {0};
+ScreenState main_screen = {0};
 
 void newline() {
     Serial.print("\n");
@@ -45,7 +46,7 @@ String intToString(int i) {
 void setup() {
     Serial.begin(BAUD);
     Serial.print("Vector Generator Command Terminal\n");
-    screen_init();
+    screen_init(&main_screen);
     printPrompt();
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
 }
@@ -114,7 +115,7 @@ void runOnce(void) {
         success = screen_push_line(&motion_pool, (LineCmd*)&cmd);
         break;
     case Cmd_Scale:
-        screen_set_scale((ScaleCmd*)&cmd);
+        screen_set_scale(&main_screen, (ScaleCmd*)&cmd);
         break;
     case Cmd_Noop:
         break;
@@ -127,6 +128,6 @@ void runOnce(void) {
 
 void loop() {
     runOnce();
-    update_screen(micros(), &motion_pool);
+    update_screen(micros(), &main_screen, &motion_pool);
     delay(1);
 }

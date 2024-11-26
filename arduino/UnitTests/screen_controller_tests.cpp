@@ -14,10 +14,12 @@ class ScreenControllerTest: public testing::Test {
 protected:
     void SetUp() {
         ring_init(&this->pool, this->pool_mem, sizeof(this->pool_mem));
+        screen_init(&this->screen);
     }
 
     char pool_mem[1<<10];
     RingMemPool pool;
+    ScreenState screen;
 };
 
 TEST_F(ScreenControllerTest, point) {
@@ -80,8 +82,23 @@ TEST_F(ScreenControllerTest, lineShifted) {
     ASSERT_EQ(sizeof(LineMotion), (unsigned)ring_pop(&this->pool));
     ASSERT_EQ(SM_Line, motion->base.type);
     EXPECT_EQ(-2, motion->x1);
-    EXPECT_EQ(5, motion->y1);
-    EXPECT_EQ(3, motion->x2);
+    EXPECT_EQ(5,  motion->y1);
+    EXPECT_EQ(3,  motion->x2);
     EXPECT_EQ(17, motion->y2);
     EXPECT_EQ(13, motion->length);
+}
+
+TEST_F(ScreenControllerTest, updateScreenPoint) {
+    // Test the corners with default settings
+    // A scale of 100, no offsets
+    PointCmd cmd = {
+        {}, // base
+        54,  // x
+        81,  // y
+    };
+    screen_push_point(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(54, this->screen.beam.x);
+    EXPECT_EQ(81, this->screen.beam.y);
 }
