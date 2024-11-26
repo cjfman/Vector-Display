@@ -35,8 +35,8 @@ TEST_F(CommandParserTest, scale) {
     // Check parsed command
     ASSERT_EQ(Cmd_Scale, cmd.base.type);
     ScaleCmd* scale_cmd = (ScaleCmd*)&cmd;
-    EXPECT_EQ(44u, scale_cmd->x_scale);
-    EXPECT_EQ(87u, scale_cmd->y_scale);
+    EXPECT_EQ(44u, scale_cmd->x_width);
+    EXPECT_EQ(87u, scale_cmd->y_width);
     EXPECT_EQ(-5,  scale_cmd->x_offset);
     EXPECT_EQ(4,   scale_cmd->y_offset);
 }
