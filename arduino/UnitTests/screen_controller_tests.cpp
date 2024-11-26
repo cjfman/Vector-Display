@@ -101,4 +101,65 @@ TEST_F(ScreenControllerTest, updateScreenPoint) {
     EXPECT_EQ(1, this->screen.beam.a);
     EXPECT_EQ(54, this->screen.beam.x);
     EXPECT_EQ(81, this->screen.beam.y);
+
+    // Change screen bounds
+    screen.x_width  = 50;
+    screen.y_width  = 86;
+    screen.x_offset = 20;
+    screen.y_offset = 0;
+    cmd.x = 25;
+    cmd.y = 9;
+    screen_push_point(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(25, this->screen.beam.x);
+    EXPECT_EQ(9, this->screen.beam.y);
+
+}
+
+TEST_F(ScreenControllerTest, updateScreenBounds) {
+    // Change screen bounds
+    screen.x_width  = 50;
+    screen.y_width  = 86;
+    screen.x_offset = 20;
+    screen.y_offset = 9;
+
+    // X is below bounds
+    PointCmd cmd = {
+        {},  // base
+        -70, // x
+        10,  // y
+    };
+    screen_push_point(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(-20, this->screen.beam.x) << "X was below bounds";
+    EXPECT_EQ(10,  this->screen.beam.y);
+
+    // X is above bounds
+    cmd.x = 110;
+    cmd.y = -1;
+    screen_push_point(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(30, this->screen.beam.x) << "X was above bounds";
+    EXPECT_EQ(-1, this->screen.beam.y);
+
+    // Y is below bounds
+    cmd.x = 0;
+    cmd.y = -89;
+    screen_push_point(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(0, this->screen.beam.x) << "X was below bounds";
+    EXPECT_EQ(-9,  this->screen.beam.y);
+
+    // Y is above bounds
+    cmd.x = -1;
+    cmd.y = 100;
+    screen_push_point(&this->pool, &cmd);
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(-1, this->screen.beam.x) << "X was above bounds";
+    EXPECT_EQ(77, this->screen.beam.y);
 }

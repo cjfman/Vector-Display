@@ -52,8 +52,8 @@ typedef struct Command {
 
 typedef struct ScaleCmd {
 	Command base;
-	unsigned x_width;
-	unsigned y_width;
+	int x_width;
+	int y_width;
 	int x_offset;
 	int y_offset;
 } ScaleCmd;

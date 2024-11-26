@@ -4,6 +4,16 @@
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
 
+ #define max(a,b)               \
+   ({ __typeof__ (a) _a = (a);  \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })      \
+
+ #define min(a,b)               \
+   ({ __typeof__ (a) _a = (a);  \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })      \
+
 //#define SCREEN_MAX_VALUE 256l
 //#define SCREEN_MIN_VALUE 0l
 //#define SCREEN_WIDTH (SCREEN_MAX_VALUE - SCREEN_MIN_VALUE)
@@ -59,6 +69,11 @@ int nextBeamState(int elapsed, const ScreenMotion* motion, const ScreenState* sc
 		beam->y = 0;
 		beam->a = 0;
 	}
+
+	// Bounds check
+	beam->x = max(min(beam->x, screen->x_width - screen->x_offset), -screen->x_offset);
+	beam->y = max(min(beam->y, screen->y_width - screen->y_offset), -screen->y_offset);
+	
 	return 1;
 }
 
