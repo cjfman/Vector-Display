@@ -15,6 +15,11 @@ protected:
     void SetUp() {
         ring_init(&this->pool, this->pool_mem, sizeof(this->pool_mem));
         screen_init(&this->screen);
+        // Assumes default values of
+        // x_width   = 100
+        // y_width   = 100
+        // speed     = 1
+        // hold_time = 1000
     }
 
     char pool_mem[1<<10];
@@ -186,16 +191,54 @@ TEST_F(ScreenControllerTest, updateScreenBounds) {
     ring_pop(&this->pool);
 }
 
-/*
 TEST_F(ScreenControllerTest, updateScreenLine) {
-    LineCmd cmd {
+    LineCmd cmd = {
         {}, // base
         0,  // x1
         0,  // y1
         30, // x2
         40, // y2
     };
+    // Line length of 50
     screen_push_line(&this->pool, &cmd);
+
+    // t = 0us; 0% of line
     update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(0, this->screen.beam.x);
+    EXPECT_EQ(0, this->screen.beam.y);
+
+    // t = 1us; 20% of line
+    update_screen(1, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(6, this->screen.beam.x);
+    EXPECT_EQ(8, this->screen.beam.y);
+
+    // t = 2us; 40% of line
+    update_screen(2, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(12, this->screen.beam.x);
+    EXPECT_EQ(16, this->screen.beam.y);
+
+    // t = 3us; 60% of line
+    update_screen(3, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(18, this->screen.beam.x);
+    EXPECT_EQ(24, this->screen.beam.y);
+
+    // t = 4us; 80% of line
+    update_screen(4, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(24, this->screen.beam.x);
+    EXPECT_EQ(32, this->screen.beam.y);
+
+    // t = 5us; 100% of line
+    update_screen(5, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(30, this->screen.beam.x);
+    EXPECT_EQ(40, this->screen.beam.y);
+
+    // t > 5us; >100% of line
+    update_screen(6, &this->screen, &this->pool);
+    EXPECT_EQ(0,  this->screen.beam.a);
 }
-*/

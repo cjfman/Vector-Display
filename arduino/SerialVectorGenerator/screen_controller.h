@@ -31,7 +31,7 @@ typedef struct LineMotion {
 	int y1;
 	int x2;
 	int y2;
-	int length; // Should this be a float?
+	float length; // Should this be a float?
 } LineMotion;
 
 typedef struct ScreenState {
@@ -40,7 +40,7 @@ typedef struct ScreenState {
 	int x_offset;
 	int y_offset;
 	long hold_time;    // Time to hold a point
-	int speed;    	   // Points moved in a us
+	float speed;       // Points moved in a microsecond
 	long motion_start; // Time when current motion started
 	BeamState beam;
 	int motion_active;

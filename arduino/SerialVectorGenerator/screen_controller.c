@@ -51,8 +51,8 @@ static int calcPoint(int elapsed, const PointMotion* motion, const ScreenState* 
 
 static int calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
 	// Dert: Distance = Rate * time
-	long moved = screen->speed * elapsed;
-	if (moved >= motion->length) {
+	float moved = screen->speed * elapsed;
+	if (moved > motion->length) {
 		// Motion is complete
 		return 0;
 	}
@@ -98,7 +98,7 @@ void screen_init(ScreenState* screen) {
 	memset(screen, '\0', sizeof(ScreenState));
 	screen->x_width   = 100;
 	screen->y_width   = 100;
-	screen->speed     = 100000; // 100 ms
+	screen->speed     = 10;     // 10 points / microsecond
 	screen->hold_time = 1000;   // 1 ms
 }
 
