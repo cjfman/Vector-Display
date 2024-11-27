@@ -1,4 +1,6 @@
+#include <inttypes.h>
 #include <math.h>
+#include <stdbool.h>
 #include <string.h>
 
 #include "ring_mem_pool.h"
@@ -38,15 +40,15 @@
 //	beam->a = 1;
 //}
 
-static int calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
+static bool calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
 	if (elapsed >= screen->hold_time) {
 		// Motion is complete
-		return 0;
+		return false;
 	}
 	beam->x = motion->x;
 	beam->y = motion->y;
 	beam->a = 1;
-	return 1;
+	return true;
 }
 
 static int calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
@@ -54,17 +56,17 @@ static int calcLine(int elapsed, const LineMotion* motion, const ScreenState* sc
 	float moved = screen->speed * elapsed;
 	if (moved > motion->length) {
 		// Motion is complete
-		return 0;
+		return false;
 	}
 
 	// Calculate movement in each dimention
 	beam->x = (motion->x2 - motion->x1) * moved / motion->length;
 	beam->y = (motion->y2 - motion->y1) * moved / motion->length;
 	beam->a = 1;
-	return 1;
+	return true;
 }
 
-int nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen) {
+bool nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen) {
 	BeamState beam;
 	int active;
 	switch (motion->type) {
@@ -91,7 +93,7 @@ int nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen) 
 		screen->beam.a = 0;
 	}
 	
-	return active;
+	return !!active;
 }
 
 void screen_init(ScreenState* screen) {
@@ -102,29 +104,29 @@ void screen_init(ScreenState* screen) {
 	screen->hold_time = 1000;   // 1 ms
 }
 
-int screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
-	int success;
+bool screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
+	bool success;
 	// Allocate object from the pool
 	PointMotion* motion = ring_get(pool, sizeof(PointMotion));
 	if (!motion) {
-		success = 0;
+		success = false;
 	}
 	else {
 		// Populate motion
 		motion->base.type = SM_Point;
 		motion->x = cmd->x;
 		motion->y = cmd->y;
-		success = 1;
+		success = true;
 	}
 	return success;
 }
 
-int screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
-	int success;
+bool screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
+	bool success;
 	// Allocate object from the pool
 	LineMotion* motion = ring_get(pool, sizeof(LineMotion));
 	if (!motion) {
-		success = 0;
+		success = false;
 	}
 	else {
 		// Populate motion
@@ -136,7 +138,7 @@ int screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
 
 		// Calculate length
 		motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
-		success = 1;
+		success = true;
 	}
 	return success;
 }
@@ -173,3 +175,4 @@ void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 	screen->motion_start = time;
 	nextBeamState(0, motion, screen);
 }
+

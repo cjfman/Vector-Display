@@ -1,6 +1,8 @@
 #ifndef SCREEN_CONTROLLER_HH
 #define SCREEN_CONTROLLER_HH
 
+#include <stdbool.h>
+
 #include "command_parser.h"
 
 typedef struct BeamState {
@@ -46,10 +48,10 @@ typedef struct ScreenState {
 	int motion_active;
 } ScreenState;
 
-int nextBeamState(const int elapsed, const ScreenMotion* cmd, ScreenState* screen);
+bool nextBeamState(const int elapsed, const ScreenMotion* cmd, ScreenState* screen);
 void screen_init(ScreenState* screen);
-int screen_push_point(RingMemPool* pool, const PointCmd* cmd);
-int screen_push_line(RingMemPool* pool, const LineCmd* cmd);
+bool screen_push_point(RingMemPool* pool, const PointCmd* cmd);
+bool screen_push_line(RingMemPool* pool, const LineCmd* cmd);
 void update_screen(long time, ScreenState* screen, RingMemPool* pool);
 
 #endif // SCREEN_CONTROLLER_HH
