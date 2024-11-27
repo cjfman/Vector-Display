@@ -141,11 +141,6 @@ int screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
 	return success;
 }
 
-void screen_set_scale(ScreenState* screen, const ScaleCmd* cmd) {
-	screen->x_width = cmd->x_width;
-	screen->y_width = cmd->y_width;
-}
-
 void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 	long elapsed = time - screen->motion_start;
 

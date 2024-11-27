@@ -39,7 +39,7 @@ typedef struct ScreenState {
 	int y_width;
 	int x_offset;
 	int y_offset;
-	long hold_time;    // Time to hold a point
+	int hold_time;     // Time to hold a point
 	float speed;       // Points moved in a microsecond
 	long motion_start; // Time when current motion started
 	BeamState beam;
@@ -50,7 +50,6 @@ int nextBeamState(const int elapsed, const ScreenMotion* cmd, ScreenState* scree
 void screen_init(ScreenState* screen);
 int screen_push_point(RingMemPool* pool, const PointCmd* cmd);
 int screen_push_line(RingMemPool* pool, const LineCmd* cmd);
-void screen_set_scale(ScreenState* screen, const ScaleCmd* cmd);
 void update_screen(long time, ScreenState* screen, RingMemPool* pool);
 
 #endif // SCREEN_CONTROLLER_HH

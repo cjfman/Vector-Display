@@ -115,7 +115,12 @@ void runOnce(void) {
         success = screen_push_line(&motion_pool, (LineCmd*)&cmd);
         break;
     case Cmd_Scale:
-        screen_set_scale(&main_screen, (ScaleCmd*)&cmd);
+        main_screen.x_width = cmd.scale.x_width;
+        main_screen.y_width = cmd.scale.y_width;
+        break;
+    case Cmd_Speed:
+        main_screen.hold_time = cmd.speed.hold_time;
+        main_screen.speed     = cmd.speed.speed;
         break;
     case Cmd_Noop:
         break;

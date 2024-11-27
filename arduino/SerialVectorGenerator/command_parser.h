@@ -21,6 +21,7 @@ typedef enum CommandType {
 	Cmd_Scale,
     Cmd_Point,
 	Cmd_Line,
+	Cmd_Speed,
     Cmd_Noop,
 	Cmd_Num,
 } CommandType;
@@ -72,11 +73,18 @@ typedef struct LineCmd {
 	int y2;
 } LineCmd;
 
+typedef struct SpeedCmd {
+	Command base;
+	int hold_time;
+	float speed;
+} SpeedCmd;
+
 typedef union CmdUnion {
 	Command  base;
 	ScaleCmd scale;
 	PointCmd point;
 	LineCmd  line;
+	SpeedCmd speed;
 } CommandUnion;
 
 void clearCache(void);

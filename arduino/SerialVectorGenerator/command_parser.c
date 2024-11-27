@@ -181,6 +181,15 @@ int cmdDecodeLine(LineCmd* cmd) {
 	return CMD_OK;
 }
 
+// Decode a speed command
+int cmdDecodeSpeed(SpeedCmd* cmd) {
+	const Command* base = &cmd->base;
+	if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
+	cmd->hold_time = atoi(base->args[0]);
+	cmd->speed     = atof(base->args[1]);
+	return CMD_OK;
+}
+
 // Parse a command line
 int cmdParse(CommandUnion* cmd, char* buf, int len) {
 	// Command arguments are space separated
@@ -225,6 +234,10 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
 	else if (strcmp(cmd_set[Cmd_Line], cmd_start) == 0) {
         cmd->base.type = Cmd_Line;
 		decode_fn = (DecodeFn)cmdDecodeLine;
+    }
+	else if (strcmp(cmd_set[Cmd_Speed], cmd_start) == 0) {
+        cmd->base.type = Cmd_Speed;
+		decode_fn = (DecodeFn)cmdDecodeSpeed;
     }
 	else if (strcmp(cmd_set[Cmd_Noop], cmd_start) == 0) {
         cmd->base.type = Cmd_Noop;
