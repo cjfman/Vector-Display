@@ -16,29 +16,6 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })      \
 
-//#define SCREEN_MAX_VALUE 256l
-//#define SCREEN_MIN_VALUE 0l
-//#define SCREEN_WIDTH (SCREEN_MAX_VALUE - SCREEN_MIN_VALUE)
-//
-//static inline int abs_int(int val) {
-//	return (val < 0) ? val * -1 : val;
-//}
-//
-//// Check bounds of the position and max it out if needed
-//static inline int get_abs_pos(int val, int scale, int offset) {
-//	val += offset;
-//	return (abs_int(val) < scale) ?   val : // Value is within bounds
-//		   (val > 0)              ? scale : // Value is too large
-//		                                0 ; // Value is too small
-//
-//}
-//
-//static void calcPointHelper(int x, int y, const ScreenState* screen, BeamState* beam) {
-//	// Scale and offset position
-//	beam->x = SCREEN_WIDTH * get_abs_pos(x, screen->x_width, screen->x_offset) / screen->x_width - SCREEN_MIN_VALUE;
-//	beam->y = SCREEN_WIDTH * get_abs_pos(y, screen->y_width, screen->y_offset) / screen->y_width - SCREEN_MIN_VALUE;
-//	beam->a = 1;
-//}
 
 static bool calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
 	if (elapsed >= screen->hold_time) {
@@ -176,3 +153,16 @@ void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 	nextBeamState(0, motion, screen);
 }
 
+// Scale position to a bit width
+uint16_t position_to_binary(int pos, int scale, unsigned bits, bool dipole) {
+	bits = min(16, bits);
+	if (dipole) {
+		bits--;
+	}
+	else {
+		pos = max(0, pos);
+	}
+
+	long max_value = (1l << bits) - 1;
+	return (uint16_t)((max_value * pos / scale) & 0xFFFF);
+}

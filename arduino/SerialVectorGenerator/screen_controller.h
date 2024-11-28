@@ -53,5 +53,6 @@ void screen_init(ScreenState* screen);
 bool screen_push_point(RingMemPool* pool, const PointCmd* cmd);
 bool screen_push_line(RingMemPool* pool, const LineCmd* cmd);
 void update_screen(long time, ScreenState* screen, RingMemPool* pool);
+uint16_t position_to_binary(int pos, int scale, unsigned bits, bool dipole);
 
 #endif // SCREEN_CONTROLLER_HH

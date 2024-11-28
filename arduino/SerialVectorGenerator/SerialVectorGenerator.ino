@@ -6,7 +6,7 @@ extern "C" {
 
 #define BAUD 115200
 
-char motion_mem[1<<10];
+char motion_mem[100];
 RingMemPool motion_pool = {0};
 ScreenState main_screen = {0};
 

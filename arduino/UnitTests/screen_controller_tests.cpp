@@ -242,3 +242,95 @@ TEST_F(ScreenControllerTest, updateScreenLine) {
     update_screen(6, &this->screen, &this->pool);
     EXPECT_EQ(0,  this->screen.beam.a);
 }
+
+TEST(ScreenController, unsignedPositionTo16Bits) {
+    // Scale 10
+    EXPECT_EQ(0x0000, position_to_binary(0,  10,  16, false));
+    EXPECT_EQ(0x1999, position_to_binary(1,  10,  16, false));
+    EXPECT_EQ(0x7fff, position_to_binary(5,  10,  16, false));
+    EXPECT_EQ(0xe665, position_to_binary(9,  10,  16, false));
+    EXPECT_EQ(0xffff, position_to_binary(10, 10,  16, false));
+
+    // Scale 100
+    EXPECT_EQ(0x0000, position_to_binary(0,   100, 16, false));
+    EXPECT_EQ(0x1999, position_to_binary(10,  100, 16, false));
+    EXPECT_EQ(0x7fff, position_to_binary(50,  100, 16, false));
+    EXPECT_EQ(0xfd6f, position_to_binary(99,  100, 16, false));
+    EXPECT_EQ(0xffff, position_to_binary(100, 100, 16, false));
+
+    // Scale 1000
+    EXPECT_EQ(0x0000, position_to_binary(0,    1000, 16, false));
+    EXPECT_EQ(0x1999, position_to_binary(100,  1000, 16, false));
+    EXPECT_EQ(0x7fff, position_to_binary(500,  1000, 16, false));
+    EXPECT_EQ(0xffbd, position_to_binary(999,  1000, 16, false));
+    EXPECT_EQ(0xffff, position_to_binary(1000, 1000, 16, false));
+}
+
+TEST(ScreenController, signedPositionTo16Bits) {
+    // Scale 10
+    EXPECT_EQ(0x0000, position_to_binary(0,  10,  16, true));
+    EXPECT_EQ(0x0ccc, position_to_binary(1,  10,  16, true));
+    EXPECT_EQ(0x3fff, position_to_binary(5,  10,  16, true));
+    EXPECT_EQ(0x7332, position_to_binary(9,  10,  16, true));
+    EXPECT_EQ(0x7fff, position_to_binary(10, 10,  16, true));
+
+    // Scale 100
+    EXPECT_EQ(0x0000, position_to_binary(0,   100, 16, true));
+    EXPECT_EQ(0x0ccc, position_to_binary(10,  100, 16, true));
+    EXPECT_EQ(0x3fff, position_to_binary(50,  100, 16, true));
+    EXPECT_EQ(0x7eb7, position_to_binary(99,  100, 16, true));
+    EXPECT_EQ(0x7fff, position_to_binary(100, 100, 16, true));
+
+    // Scale 1000
+    EXPECT_EQ(0x0000, position_to_binary(0,    1000, 16, true));
+    EXPECT_EQ(0x0ccc, position_to_binary(100,  1000, 16, true));
+    EXPECT_EQ(0x3fff, position_to_binary(500,  1000, 16, true));
+    EXPECT_EQ(0x7fde, position_to_binary(999,  1000, 16, true));
+    EXPECT_EQ(0x7fff, position_to_binary(1000, 1000, 16, true));
+}
+
+TEST(ScreenController, unsignedPositionTo12Bits) {
+    // Scale 10
+    EXPECT_EQ(0x0000, position_to_binary(0,  10,  12, false));
+    EXPECT_EQ(0x0199, position_to_binary(1,  10,  12, false));
+    EXPECT_EQ(0x07ff, position_to_binary(5,  10,  12, false));
+    EXPECT_EQ(0x0e65, position_to_binary(9,  10,  12, false));
+    EXPECT_EQ(0x0fff, position_to_binary(10, 10,  12, false));
+
+    // Scale 100
+    EXPECT_EQ(0x0000, position_to_binary(0,   100, 12, false));
+    EXPECT_EQ(0x0199, position_to_binary(10,  100, 12, false));
+    EXPECT_EQ(0x07ff, position_to_binary(50,  100, 12, false));
+    EXPECT_EQ(0x0fd6, position_to_binary(99,  100, 12, false));
+    EXPECT_EQ(0x0fff, position_to_binary(100, 100, 12, false));
+
+    // Scale 1000
+    EXPECT_EQ(0x0000, position_to_binary(0,    1000, 12, false));
+    EXPECT_EQ(0x0199, position_to_binary(100,  1000, 12, false));
+    EXPECT_EQ(0x07ff, position_to_binary(500,  1000, 12, false));
+    EXPECT_EQ(0x0ffa, position_to_binary(999,  1000, 12, false));
+    EXPECT_EQ(0x0fff, position_to_binary(1000, 1000, 12, false));
+}
+
+TEST(ScreenController, signedPositionTo12Bits) {
+    // Scale 10
+    EXPECT_EQ(0x0000, position_to_binary(0,  10,  12, true));
+    EXPECT_EQ(0x00cc, position_to_binary(1,  10,  12, true));
+    EXPECT_EQ(0x03ff, position_to_binary(5,  10,  12, true));
+    EXPECT_EQ(0x0732, position_to_binary(9,  10,  12, true));
+    EXPECT_EQ(0x07ff, position_to_binary(10, 10,  12, true));
+
+    // Scale 100
+    EXPECT_EQ(0x0000, position_to_binary(0,   100, 12, true));
+    EXPECT_EQ(0x00cc, position_to_binary(10,  100, 12, true));
+    EXPECT_EQ(0x03ff, position_to_binary(50,  100, 12, true));
+    EXPECT_EQ(0x07ea, position_to_binary(99,  100, 12, true));
+    EXPECT_EQ(0x07ff, position_to_binary(100, 100, 12, true));
+
+    // Scale 1000
+    EXPECT_EQ(0x0000, position_to_binary(0,    1000, 12, true));
+    EXPECT_EQ(0x00cc, position_to_binary(100,  1000, 12, true));
+    EXPECT_EQ(0x03ff, position_to_binary(500,  1000, 12, true));
+    EXPECT_EQ(0x07fc, position_to_binary(999,  1000, 12, true));
+    EXPECT_EQ(0x07ff, position_to_binary(1000, 1000, 12, true));
+}
