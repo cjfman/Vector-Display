@@ -1,3 +1,5 @@
+#include <SPI.h>
+
 extern "C" {
 #include "command_parser.h"
 #include "ring_mem_pool.h"
@@ -5,6 +7,11 @@ extern "C" {
 }
 
 #define BAUD 115200
+#define DAC_SYNC 0
+#define DAC_LDAC 1
+#define DAC_CLR  2
+#define DAC_RSET 3
+#define DAC_CLK_SPEED 5000000 // 5MHz / 200ns
 
 char motion_mem[100];
 RingMemPool motion_pool = {0};
@@ -43,12 +50,56 @@ String intToString(int i) {
     return String(s);
 }
 
+static inline void dac_reset(void) {
+    digitalWrite(DAC_RSET, LOW);
+    delay(1);
+    digitalWrite(DAC_RSET, HIGH);
+}
+
+void dac_write(uint16_t x, uint16_t y) {
+    SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
+    digitalWrite(DAC_SYNC, LOW);
+    SPI.transfer(x, 16);
+    SPI.transfer(y, 16);
+    digitalWrite(DAC_SYNC, HIGH);
+    SPI.endTransaction();
+}
+
+void update_dac(const ScreenState* screen) {
+    static uint16_t x = 0;
+    static uint16_t y = 0;
+    if (screen->beam.x == x && screen->beam.y == y) {
+        // Nothing to do
+        return;
+    }
+    x = screen->beam.x;
+    y = screen->beam.y;
+    dac_write(x, y);
+}
+
 void setup() {
+    // Setup DAC control logic pins
+    // The are active low
+    digitalWrite(DAC_SYNC, HIGH);
+    digitalWrite(DAC_LDAC, HIGH);
+    digitalWrite(DAC_CLR,  HIGH);
+    digitalWrite(DAC_RSET, HIGH);
+    pinMode(DAC_SYNC, OUTPUT);
+    pinMode(DAC_LDAC, OUTPUT);
+    pinMode(DAC_CLR,  OUTPUT);
+    pinMode(DAC_RSET, OUTPUT);
+    dac_reset();
+
+    // Set up serial
     Serial.begin(BAUD);
     Serial.print("Vector Generator Command Terminal\n");
+
+    // Initialize memory
     screen_init(&main_screen);
-    printPrompt();
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
+
+    // Print prompt
+    printPrompt();
 }
 
 void runOnce(void) {
@@ -134,5 +185,5 @@ void runOnce(void) {
 void loop() {
     runOnce();
     update_screen(micros(), &main_screen, &motion_pool);
-    delay(1);
+    update_dac(&main_screen);
 }
