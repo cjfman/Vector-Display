@@ -61,7 +61,21 @@ static inline void dac_reset(void) {
     digitalWrite(DAC_CLR, HIGH);
 }
 
-void dac_write(uint16_t x, uint16_t y) {
+void dac_write(uint16_t val) {
+    // Write data
+    SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
+    digitalWrite(DAC_SYNC, LOW);
+    SPI.transfer(val, 16);
+    digitalWrite(DAC_SYNC, HIGH);
+    SPI.endTransaction();
+
+    // Load data
+    digitalWrite(DAC_LDAC, LOW);
+    delayMicroseconds(1);
+    digitalWrite(DAC_LDAC, HIGH);
+}
+
+void dac_write2(uint16_t x, uint16_t y) {
     // Write data
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
@@ -85,7 +99,7 @@ void update_dac(const ScreenState* screen) {
     }
     x = screen->beam.x;
     y = screen->beam.y;
-    dac_write(x, y);
+    dac_write2(x, y);
 }
 
 void setup() {
@@ -113,7 +127,7 @@ void setup() {
     printPrompt();
 }
 
-void runOnce(void) {
+void checkForCommand(void) {
     char cmd_buf[CMD_BUF_SIZE];
     memset(cmd_buf, '\0', CMD_BUF_SIZE);
 
@@ -194,7 +208,14 @@ void runOnce(void) {
 }
 
 void loop() {
-    runOnce();
+    /*
+    // Check for command, then update the screen
+    checkForCommand();
     update_screen(micros(), &main_screen, &motion_pool);
     update_dac(&main_screen);
+    /*/
+    // Make a 1kHz sawtooth wave
+    dac_write((millis() * 1000 / (0xFFFF)) & 0xFFFF);
+    delay(1);
+    //*/
 }
