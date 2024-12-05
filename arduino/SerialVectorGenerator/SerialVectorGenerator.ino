@@ -7,10 +7,10 @@ extern "C" {
 }
 
 #define BAUD 115200
-#define DAC_SYNC 0
-#define DAC_LDAC 1
-#define DAC_CLR  2
-#define DAC_RSET 3
+#define DAC_SYNC 12
+#define DAC_LDAC 8
+#define DAC_CLR  7
+#define DAC_RSET 4
 #define DAC_CLK_SPEED 5000000 // 5MHz / 200ns
 
 char motion_mem[100];
@@ -51,18 +51,29 @@ String intToString(int i) {
 }
 
 static inline void dac_reset(void) {
+    // Reset
     digitalWrite(DAC_RSET, LOW);
     delay(1);
     digitalWrite(DAC_RSET, HIGH);
+    // Clear
+    digitalWrite(DAC_CLR, LOW);
+    delay(1);
+    digitalWrite(DAC_CLR, HIGH);
 }
 
 void dac_write(uint16_t x, uint16_t y) {
+    // Write data
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
     SPI.transfer(x, 16);
     SPI.transfer(y, 16);
     digitalWrite(DAC_SYNC, HIGH);
     SPI.endTransaction();
+
+    // Load data
+    digitalWrite(DAC_LDAC, LOW);
+    delayMicroseconds(1);
+    digitalWrite(DAC_LDAC, HIGH);
 }
 
 void update_dac(const ScreenState* screen) {
