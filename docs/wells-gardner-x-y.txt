@@ -1,0 +1,325 @@
+                The Wells Gardner 19K6400 Color X/Y monitor
+                                    or
+                  Oh God, Not another color X/Y monitor!
+
+Preface:
+   Twas the autumn of the First year, the devine beginning for some, when
+out from abbyss of B&W came to be the 19K6100... and it was seen as good.
+Well, sort of. It was then, mere months later, out of the fell darkness, there
+came to be wrought the dread G-08 and a great hew and cry was heard fall from
+the tongues of the embittered worshipers of the X/Y. Amidst the babble and
+throng was heard the call "Where's that damnable fire extinguisher?".
+   Of the false saviour, the spawn of the Disciples of Amplifone, whose
+name shall not be uttered, nought is written, for it was a twisted beast
+whose heart was oft consumed in fire.
+   It then came to pass that the exhaulted Engineers of WG did bend Thier
+will and thought to bring forth into being a new X/Y monitor whose very
+heart and sinew was taken from it's most highest parent, the K6100. After the
+Blessed Engineer's most arduous toil had ended They rested and did look down
+upon that which They had brought into being and Thier hearts did soar and near
+burst with gladness. Rejoicing, They were heard to proclaim in blinding
+voices which reverberated in to the Heavens...
+   
+                         "BEHOLD, THE 19K6400".
+
+;-)
+
+  OK, seriously, if your like me you've heard of the Wells Gardner 19K6101/2,
+the Electrohome G-08 and the Amplifone (whatever) and probably worked on a
+few too. You also probably read Gregg Woodcock's EXCELLENT write up on them.
+If you haven't read the latest version of it (6.1) do so. Highly recommended!
+In this document are mentions of some revisions of the deflection, Hi-V and
+neck boards; boards numbered P322, P324 and P341, respectively. There are
+also hints at a model called the 19K6400. Since I had never seen a 6400 I
+had assumed that it was similar to the 6100 series and the boards would be
+swappable. It turns out that they are not.
+  The 19K6401 and 6402 are very similar to it's predecessor but there are some
+important differences. First, and most important, is the fact that they are
+NOT plug compatible, physically or electrically. The main connector is only
+12 pins, not 15. The RGB and associated returns are on this connector, as is
+the filament voltage and the AC input voltage. The X and Y signals come in on
+a seperate 4 position connector. The X,Y and RGB signals are the same as the
+6100 series but the AC input voltage is +/- 40 VAC, not +/- 25VAC!
+  Looking at the monitor you'd also notice that the power transistors for
+the X and Y deflection circuits are gone. They are no longer mounted to the
+chassis. Instead there are four vertically mounted aluminum heat sinks between
+the high voltage cage and the deflection board. There are also twice as many
+power transistors as before (more on this below).
+  The other physical differences are unimportant and won't be mentioned here
+except to say that the Hi-V cage is 'connector-ized' differently. The real
+differences can be found by looking at the schematics. I'll cover the changes
+(read improvements) in the circuits for each board separately.
+
+---------------------  ELECTRICAL SPECIFICATIONS ------------------------------
+
+  First here's a comparison of specifications taken from the manuals for both
+of these monitors. You'll note that there's more thorough specifications for
+the 6400.
+
+Model 19K610x   (from Atari manual TM-183 2nd printing)
+  A. INPUTS
+    1. Input Voltage
+       25-0-25 VAC RMS center-tapped at nominal line for amplifier.
+    2. Input Voltage Range
+       +10% to -15%
+    3. Input Power at 50 VAC
+       150 watts AC (amplifiers at maximum deflection).
+    4. Signal Inputs (at maximum deflection).
+       "X" horizontal: 16 volts P/P (+/-8 volts).
+       "Y" vertical: 12 volts P/P (+/-6 volts).
+       "Z" beam drive: 4.0 volts maximum brightness, 1.0 volt black level.
+    5. Input Impedance
+       "X" = 2.5K ohms, "Y" = 2.8K ohms, "Z" = 1K ohms
+  B. WRITING RATE
+       "X" amplifier = .05 inch per microsecond, "Y" amplifier = .0375 inch
+       per microsecond.
+  C. Z BANDWIDTH
+       5 MHz at -3db point.
+  D. HIGH VOLTAGE
+       19.5KV at Ib=0; adjustable to +/- 2 1/2%. High voltage regulation
+       restricted to 2% maximum (Ib 0 to 100 microamps)
+  C. CONTROLS
+       Factory adjusted controls: high-voltage adjustment and Z tracking
+       Operator adjustable controls: focus and brightness.
+  
+Model 19K640x  (from 19K6400 CVM Service manual)
+  1. INPUT POWER REQUIREMENTS:
+    Input Voltage
+       40-0-40 VAC RMS @ 1.75 ARMS (Typical)
+       6.6 VRMS @ 0.74A (Filament)
+    Input Voltage Range: +10% to -10% for performance specifications.
+    Input Power: 140W typical
+       All secondary windings must be isolated from the power line.
+  2. SIGNAL INPUTS:
+       "X" full deflection 8V P/P (+4V to -4V) - 15 inches
+       "Y" full deflection 6V P/P (+3V to -3V) - 11.25 inches
+       Red, Green and Blue Drive
+           Blanking Level........................... 1.0V
+           CRT Cutoff............................... 1.5V
+           Low Beam................................. 1.8V
+           High Beam................................ 3.6V
+           Max Drive................................ 4.0V
+  3. INPUT IMPEDANCE:
+       "X"....................... 1.3k ohms
+       "Y"....................... 1.3k ohms
+       "Z"....................... 1.0k ohms
+  4. WRITING DISTANCE VS. TIME:
+       Measured maximum time durations per line segment @ -10% line.
+       "X"...6.0us for 0.5"       "Y"...6.0us for 0.5"        
+             8.0us for 1.0"             8.0us for 1.0"        
+            16.0us for 2.0"            21.0us for 2.0"        
+            30.0us for 4.0"            42.0us for 4.0"        
+            62.0us for 8.0"            94.0us for 8.0"        
+           110.0us for 14.5"          131.0us for 10.5"        
+  5. X-Y DEFLECTION AMPLIFIER DUTY CYCLE:
+       The maximum duty cycle of deflection, in any one direction off
+       center, is 60% of the frame time for full deflection. Amplifier
+       protection circuitry will activate if this level is exceeded.
+  6. X-Y DEFLECTION DELAY WITH RESPECT TO Z:
+       1.5us maximum
+  7. DRIFT WITH TEMPERATURE:
+       Pattern shift after stabilization,0.15 inch max.(25C to 55C).
+  8. HIGH VOLTAGE:
+       19.5KV +/- 0.5kV @ 0 beam.
+       Regulation...2.0%
+  9. PINCUSHION DISTORTION: 15 x 11.25 inch rectangle
+       N-S  1.5% max.
+       E-W  1.5% max. 
+ 10. LINEARITY DISTORTION: Crosshatch Pattern Largest Square vs.
+                           Smallest square
+       X axis 10% max.
+       Y axis 10% max. 
+ 11. CONTROLS [not listed in manual but I'll add them here]
+       X GAIN, X LINEARITY, X CENTERING,
+       Y GAIN, Y LINEARITY, Y CENTERING.
+NOTE: The above controls are part of the Interface PC Board P325
+
+Due to the minimal specs for the 6100's writing rate you can't really
+do a true comparison on the relative speeds.
+
+-------------------  CIRCUIT COMPONENT COMPARISON ------------------------
+
+This section describes the differences in the actual components in the two
+monitors. The PC boards themselves are different to allow for the two new
+connectors on the deflection board assembly, the brightness control parts
+on the neck board and the slightly different power connector for the Hi-V
+board.
+
+Unless otherwise noted: all resistors are 1/4 Watt 5% Tolerance,
+                        all capacitor values in uF (microfarads)
+
+I) P322 - THE DEFLECTION / DC VOLTAGE / SPOT KILLER BOARD -----------------
+
+a) DC voltage Supply
+
+  For the most part the design of this board is similar to the P327 board.
+Here the supply was designed to output +/-47 VDC where it use to be +/- 28V.
+Value changes are listed below.
+               19K610x (P314)            19K640x (P322)
+Q100           MPSA06                    MPSU57
+Q101           MPSA56                    MPSU07 
+Q102           2N3716                    2N3716X
+Q103           2N3792                    2N3792X
+D100-103       S5A2                      SAME
+D104,105       1N914B                    1N4004
+ZD100,101      ZENER 28V,1W,5%           46V,1W,5%
+C100,101       4700uF 50V                4700uF 63V
+C102,103       470uF 35V                 330uF 50V
+C104,105       0.1uF 50V                 SAME
+R100,101       15ohm 1/2W 5%             SAME
+R102,103       330ohm                    1K
+
+b) Spot Killer Circuit
+
+  Only resistor value changes here to compensate for the higher rails.
+Q800           2N3906
+Q801,Q802      
+D800           LED,red                   SAME
+D801,802       1N914
+D803,804
+C800-803       0.47uF                    1.0uF 50V
+R800           4.7Kohm                   10K
+R801           15Kohm                    33K
+R802           1.2Kohm 1/2W              2.2K 2W
+R803           33Kohm                    SAME
+R804,805       750Kohm                   1.5MEG
+R806,807       220ohm                    SAME
+R808,809       680ohm 1/2W               270ohm 1/2W
+
+c) Deflection Amps
+  The design of this section is mostly the same. The difference is in the
+transistors Q605,606,705,706. Each of these is replaced with A PAIR of
+transistors and two low resistance emitter resistors. These are now mounted on
+large (~4" X 4") aluminum finned heat sinks.
+
+Q600-602,700-702  TPS98                  SAME
+Q603,703          MPSU57                 SAME
+Q604,704          MPSU07                 SAME
+D600,601,700,701  1N914B                 SAME
+D602,702          1N4001                 SAME
+C600,601,700,701  0.001uF                .001/-/-/.001
+C602,702          0.22uF                 SAME
+C603,703          0.47uF 100V            SAME                
+C604,704          0.1uF 50V              SAME
+R600,700          1.2K 2%                0 OHM
+R601              1.6K 2%                NOT USED
+R701              1.3K 2%                NOT USED
+R602,603,702,703,
+ 607,707          390ohm                 470ohm
+R604,704          2.7K 1/2W              3.6K 1/2W
+R605,705          91ohm                  SAME
+R606              2.2K 1/2W              8.2K 1/2W
+R706              2.2K 1/2W              4.7K 1/2W
+R608,708          100ohm                 SAME
+R609,709          15ohm                  24ohm
+R610,710          1.5ohm 10W NON-IND     SAME
+R611,711          10ohm                  39ohm
+R612,613,712,713  3.3ohm 1/2W            68ohm 2W/unused/unused/68ohm 2W
+ [See text below for circuit change]
+R614              1.2K 1/2W              SAME
+R714              1.6K 1/2W              1.3K 1/2W
+
+Deflection Transistors
+Q605              2N3716                 2N3716/2N3716/two 0.39ohm 1W 5%
+Q705              2N3716                 2N3716/2N3716/two 0.39ohm 1W 5%
+Q606              2N3792                 2N3792X/2N3792X/two 0.39ohm 1W 5%
+Q706              2N3792X                2N3792/2N3792/two 0.39ohm 1W 5%
+
+Circuit change
+In an effort to decouple the delfection pre-drivers from the power drivers
+the circuit has been changed here slightly. Note the absence of R613 & R712.
+
+The deflection power transistors, as mentioned above, are now two transistors
+with thier bases connected together and thier collectors connected together.
+Each emitter is connected to a 0.39ohm 1W 5% resistor with the other ends of
+the resistor tied together. Collectors and bases are connected as before and
+the resistors are now connected to where the emitter use to be on the 6100.
+Each transistor pair is now mounted on a hefty (~4" x 4") aluminum finned
+heatsink. The four heatsink assemblies are stacked together and are mounted to
+the chassis between the Hi-V cage and the deflection board.
+
+The RCA picture tube 19VLTP22 is used in the 19K6402 model monitor and requires
+the WG #9A2825-001 deflection yoke. The Rauland picture tube, type 19VNJP22,
+which is used in the model 19K6401, requires a 9A2819-001 yoke.
+
+d) Degauss Circuit 
+P.T.C.,D106,D107,C106 - unchanged
+R106              22ohm 2W 10%           22ohm 3W 10%
+
+II) P324 - THE HIGH VOLTAGE BOARD --------------------------------------------
+
+IMHO, this change alone makes the monitor 2X as reliable as it's predecessor.
+In the original design, if one side of the power supply died, which it often
+did, there was a fair chance that the Hi-V circuit could be over-stressed. I'm
+not implying that this was the major cause of failures, just one of them. In
+the 6400 design the Hi-V module is powered by +48VDC. There are very few other
+differences in the design.
+
+Component value changes (components not mentioned remain unchanged)
+                  19K610x (P316)         19K640x (P324)
+
+C901              100uF 35V              100uF 100V
+C902              100uF 35V              SHORT (note 1)
+C905              33uF 150V              33uF 63V
+R901              2.2ohm 2W 5%           3.9ohm 3W 10%
+R907              2.2ohm 2W 5%           UNUSED
+
+Note 1 - By shorting out capacitor C902 what use to be B- is now GND.
+
+III) P341 - THE NECK BOARD ----------------------------------------------------
+
+At first glance the P341 looks very much like the P315. Comparing the CRT
+socket pinouts, however, shows otherwise. The 19VLTP22 pinout is very different
+from the 19VLUP22. While physically you could plug the P341 in place of a 315;
+all the connectors would fit, you'd probably destroy both board and tube. 
+
+Component value changes (components not mentioned remain unchanged)
+                  19K610x (P315)         19K640x (P341)
+
+ZD501             ZENER 13V 1W 5%        18V 1W 5%
+C503              33uF 250V              2.2uF 350V
+R525              3.3M 1/2W 10%          22M 1/2W
+R526              510ohm 1W              1K 2W
+R527              470ohm 1/2W            33ohm 1/2W
+
+Circuit change -
+Capacitors C500-502 are now connected to the wipers of R507-509.
+The brightness control circuit is made up of an additional four resistors,
+one potentiometer and a cap.
+
+IV) P325 INTERFACE & IPC BOARD ------------------------------------------------
+
+This is a new board which accepts the X & Y signals along with +/- 40VDC and
+output modified X & Y signals. The first stage of the board is an adjustable
+gain circuit with a nominal value of X2. The next stage provides input 
+protection for the deflection amplifiers. Lastly there is linearity and
+centering adjustments. It's not clear from the manual just where the board is
+actually located but it sounds as if it plugs directly into two new connectors
+on the deflection board (P602 and P702) and is at a right angle to it. Doesn't
+sound like it's very easy to get at the pots.
+
+---------------------------  SUMMARY  ----------------------------------------
+
+I'm posting this article simply to distribute information that's not widely
+available. The 19K640x has obvious improvements over the 19K610x but I'm not
+trying to say that it's a better monitor overall. I have no idea if WG had
+intended this to be the next generation color X/Y monitor or if it was a 
+response to Electrohome's G08. It obviously wasn't widely used. The only game
+that I know used it is Aztarac and we know how many of those there are ;-)
+
+You're probably wondering if some of the improvements could be used to upgrade
+our beloved K610x's. The answer is a resounding 'Maybe'. The three major
+improvements, I think, are: the dual deflection transistors, the Hi-V supply's
+unipolar supply input and the new Interface board (Very handy if this display
+were to be used with the Sega stuff). The method of transistor heatsinking
+could definitely be applied but it's up in the air whether the dual XSTR
+design can be applied (I'm leaning toward a yes here). The Interface board
+could certianly be used but without a PC board it would be too much work to
+make. Lastly, the Hi-V supply mod is probably not possible. However if one was
+to use an external 48V supply...
+
+-----------------------------------------------------------------------------
+Dave Fish                         |       "We want...Information. INFORMATION
+Melrose, MA  USA                  |              You won't get it!
+   dfish@bev.etn.com   (work)     |        By hook or by crook we will"
+   dfish@nyx.cs.du.edu (/work)    |                    _The Prisoner_

@@ -1,0 +1,117 @@
+THEORY OF OPERATION:  Wells Gardner "Quadrascan" Color X-Y Monitor
+
+CAUTION!!! LETHAL VOLTAGES ARE PRESENT IN THIS MONITOR, IF YOU HAVE ANY
+ DOUBTS  ABOUT YOUR ABILITY DO NOT ATTEMPT TO REPAIR YOUR MONITOR!!
+
+The "Quadrascan" color X-Y display was designed and built by Wells Gardner 
+Electronics Corp. This display differs VERY LITTLE from the Electrohome G-05
+Black and White X-Y monitor. The only difference is that this monitor has 
+three Z amplifiers to control three color guns.  Refer to the G-05 theory 
+if there is any confusion on operating principles.  
+
+PINOUTS
+
+1	Red input  4.0V full on   1.0V black level
+2	Green input  4.0V full on  1.0V black level
+3	Blue input 4.0V full on  1.0 black level
+4	Red GND
+5	Green GND
+6	Blue GND
+7	X input  16V P/P  2.5Kohms
+8	Y input	12V P/P 2.5Kohms
+9	Not Used
+10	X GND
+11	Y GND
+12	Power GND
+13	25VRMS
+14	Power GND
+15	25VRMS
+
+LOW VOLTAGE POWER SUPPLY
+
+	The input voltage of 48 VAC from the game power supply enters through 
+fuses F100 and F101.  Diodes D100 through D104 form a rectifier bridge that 
+converts the AC input to an unfiltered DC (about 35V).  Capacitors C100 and 
+C101 form the first stage of filtering.  Resistors R102 and R103 and 
+capacitors C102 and C103 form two low-pass filters  which help filter out 
+AC ripple.  Transistors Q100 through Q103 form and active filter that 
+provides the stable, filtered DC voltages.
+	The degaussing coil operates when power is first applied to the 
+display, when the PTP(positive temperature coefficient) thermistor is cool. 
+Diodes D106 and D107 form a protective barrier from any residual current 
+that might enter the degaussing coil during normal game play.  The output 
+voltages from the low voltage power supply should be as follows:
+				J101-2	ground
+				J101-3	+25 volts
+				J101-4	-25 volts
+
+	The picture tube filament voltage is taken from the front end of the 
+low-voltage power supply through D108 and R107.
+
+X AND Y AMPLIFIERS
+
+	Both the X and Y amps are nearly identical. Only the Y amp is 
+described.  
+
+	The Y deflection signal from the game board is applied to the base 
+circuit of transistor Q600.  Transistors Q600 and Q601 form a differential 
+amplifier.  Transistor Q602 is a constant current source providing current 
+to the differential amplifier.  Transistor Q603 is the driver transistor 
+that provides current to the emitter-follower transistors Q605 and Q606.  
+Transistor Q604 is a constant current source that provides current to the 
+driver transistor Q603.  Fuse F600 can open in case of circuit failure, 
+protecting the deflection coil in the yoke from damage.
+
+Z AMPLIFIERS
+
+	Since the red, green and blue amplifiers are identical, only the blue 
+amplifier will be described.
+
+	Transistor Q502 is a common emitter amplifier used to provide gain 
+for the blue intensity signal. Resistor R509 is the blue drive pot which 
+determines the amount of gain in the blue amplifier.  Resistor R513 is the 
+blue bias pot which determines the cut-off characteristics of the blud 
+amplifier.  The output of the Z amplifiers bias the cathodes of the three 
+electron guns within the picture tube.
+	Transistor Q503 is biased by a voltage from the spot killer.  When 
+transistor Q503 is cut off, the collector of Q503 rises to the zener voltage
+of ZD500 (+4.3V).  This allows the emitter of transistor Q502 to rise in 
+voltage, which disables the color signals to the picture tube.
+
+SPOT KILLER
+
+	The purpose of the spot killer is to turn off the video intendity 
+amplifiers when deflection is not occurring.  Failure of the spot killer 
+can cause the phosphor coating on the picture tube to become burned.
+	The two signal input voltages to the spot killer are taken from 
+resistors R610 and R710  in the X and Y deflection circuits.  Diodes D801 
+through D804 and Capacitors C800 through C803 form two seperate voltage 
+doublers.  The output of the voltage doublers are applied to the bases of 
+transistors Q801 and Q802.
+	When either of the deflection amplifiers is not driving current 
+through the deflection coils, then either transistor Q801 or Q802 becomes 
+biased so that it conducts, which turns on transistor Q800 and the 
+LED D800 in its collector circuit.  When transistor Q800 is conducting, 
+then transistor Q503 in the neck PCB is cut off, forcing the red, green 
+and blue amplifiers to turn off their electron beams.
+
+HIGH VOLTAGE POWER SUPPLY
+
+	Integrated circuit IC901 is a timer circuit that produces a 20KHz 
+output which drives transistors Q904 and Q905.  These transistors are 
+current amplifiers that drive the primary winding of the Step down 
+transformer T901.  The output of T901 is used to turn on the main driver 
+transistor Q906 that in turn drives the High Voltage Step-up transformer 
+T900.  The output of the secondary winding is applied to the picture tube 
+at the focus and intensity grids and the 19.5KV anode.
+	Diode D901 allows capacitor C910 to charge to +180V during the 
+discharge of the primary's magnetic field.  Transistors Q900 through Q903 
+are error amplifiers that regulate the +180V video B+.  Pot R918 provides 
+an adjustment to the video B+ and hence the high voltage.
+	To adjust the high voltage, you will need a high voltage probe, a 
+voltmeter, and an insulated screwdriver tipped adjustment tool.  Turn off 
+power to the display.  Connect the high-voltage probe to to the voltmeter, 
+and insert the tip of the probe under the high voltage anode rubber shield.
+	Insert the insulated screwdriver tipped adjustment tool through the 
+top of the high voltage cage, making contact with potentionmeter R918.  
+Turn on the display and adjust  the high voltage to 19.5KV.

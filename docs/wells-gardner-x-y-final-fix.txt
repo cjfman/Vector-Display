@@ -1,0 +1,112 @@
+==================Start====================
+StarTech Journal 
+December 1983
+Volume 5
+Number 10
+Pages 14 and 15
+=========================================
+WELLS GARDNER
+X-Y MONITOR/FINAL SOLUTION
+
+By Wayne McGuire, Brady Dist, Charlotte, NC
+
+We at Brady Distributing Co. pride ourselves on the service we have been
+able to offer our customers. The following modifications are a product of
+our shop personnel and, in our estimation, a final solution to the Wells
+Gardner X-Y monitor problems.
+
+Over the past three months, we have modified every Well Gardner X-Y monitor
+to cross our bench and the rate of repeated failure is such that only one
+has returned with a deflection problem. These changes make the 19K6901and
+19K6103 very reliable monitors and much better suited for the enviroments in
+which they are operated.
+
+
+BRADY MODIFICATIONS FOR WELLS GARDNER QUADRASCAN COLOR X-Y
+
+
+1 - INPUT PROTECTION CIRCUIT PCB ASSEMBLY
+
+To ensure continued curcuit operation, Atari Feild Service suggests that you
+perform thefollowing modifications.
+
+A. Remove the lead connecting the IPC board to +27 volts on the display
+printed cirduit board. The lead is near Q1 and Q3 (see Fig 1.1).
+
+B. Replace this lead with a 1k ohm, 1/4 watt resistor (see Schematic of Fig 1.1)
+
+
+2 - POWER SUPPLY CIRCUIT
+
+The Low Voltage Power Supply is to be bypassed in this modification. The
+input stages of the deflection circuits used in this monitor are of the
+differential type and exhibit a high common mode rejection. This
+characteristic will filter out any noise or ripple of the power supply.
+
+A. Cut diodes D104 and D105 out of the power supply curcuit ( Schematic 2.1)
+
+B. Make a Rat Tail splice connecting the leads at pins 1 and 4; also, splice
+the leads at pins 5 and 7.
+
+C. Cut the remaining wires flush with the plug (leads at pins 3 and 6)
+
+NOTE: This modification will require readjustment of the monitor color,
+focus and signal level from the logic board. This is due to the higher
+supply voltage now available at the deflection and color stages. this
+modification will remove about 45 watts of power from the bottom plate of
+the monitor chassis and cause a noticable reduction in temperature.
+
+
+3 - X CHANNEL CURRENT LIMITER
+
+The X channel of this monitor must do more work than the Y channel. This
+modification limits the the amount of current that can be delivered to the
+load and the X channel output transistors are moved so they may be more
+efficiently cooled by convection currents.
+
+A. Remove the plug from J700 and reconnect at J600. The cable of P700 will
+need to be lengthened before this can be done. This move connects the
+transistors on the bottom chassis plate to the Y channel
+
+B. Transistors mounted on the side of the chassis panel may now be connected
+to J700. These are now the X channel outputs transistors. The side panel
+allows more air currents to pass over the transistors and consequently more
+efficient cooling.
+
+C. Remove the emitter lead from the transistor sockets on the side and place
+a 0.2 ohm, 3 watt resistor in series with emitters of Q705 and Q706 (as in
+Schematic 3.1)
+
+D. Place two SK3081 diodes in parallel with the base-emitter curicuits
+(schematic 3.1)
+
+NOTE: When the currents through the emitter resistors reach 3 amps the
+voltage drop is such that the diodes across the base-emitter curcuit will
+start to turn on. This action will drain current away from the base curcuit
+and prevent transistors Q705 and Q706 from passing too much current.
+
+4 - HIGH VOLTAGE POWER SUPPLY
+
+These changes to the high power supply should reduce incidence of failure
+due to high temperatures and/or low voltage power supply failures.
+
+A. Replace capacitors C901 and C902 with 220MF 50V capacitors.
+
+B. Replace transistors Q901 and Q902 with transistor type 2N2102. Place a
+heat sink for a T0-39 package on Q901. Take care not to allow the two
+transistors to touch.
+
+C. Replace C905 with a 50MF 200V capacitor.
+
+D. Solder an SK3081 diode across capacitors C910 and C905 with the polarity
+of the diodes opposite that of the capacitors.
+
+E. Cut vents into the aluminum cover of the high voltage unit ( as
+illustrated in figure 4.2)
+
+NOTE: The last procedure is the most important of these modifications. The
+vents will allow convection currents to cool the high voltage section
+reducing the thermal stress to these curcuits. Also, if the power supply
+modifications are performed, this entire modification becomes mandatory.
+
+====================END=====================
