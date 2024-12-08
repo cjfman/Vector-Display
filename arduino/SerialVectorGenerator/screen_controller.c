@@ -3,6 +3,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#define DEBUG true
+
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
 
@@ -81,52 +83,45 @@ void screen_init(ScreenState* screen) {
 	screen->hold_time = 1000;   // 1 ms
 }
 
-bool screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
-	bool success;
+PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
 	// Allocate object from the pool
 	PointMotion* motion = ring_get(pool, sizeof(PointMotion));
 	if (!motion) {
-		success = false;
+		return NULL;
 	}
-	else {
-		// Populate motion
-		motion->base.type = SM_Point;
-		motion->x = cmd->x;
-		motion->y = cmd->y;
-		success = true;
-	}
-	return success;
+
+    // Populate motion
+    motion->base.type = SM_Point;
+    motion->x = cmd->x;
+    motion->y = cmd->y;
+	return motion;
 }
 
-bool screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
-	bool success;
+LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
 	// Allocate object from the pool
 	LineMotion* motion = ring_get(pool, sizeof(LineMotion));
 	if (!motion) {
-		success = false;
+        return NULL;
 	}
-	else {
-		// Populate motion
-		motion->base.type = SM_Line;
-		motion->x1 = cmd->x1;
-		motion->y1 = cmd->y1;
-		motion->x2 = cmd->x2;
-		motion->y2 = cmd->y2;
+    // Populate motion
+    motion->base.type = SM_Line;
+    motion->x1 = cmd->x1;
+    motion->y1 = cmd->y1;
+    motion->x2 = cmd->x2;
+    motion->y2 = cmd->y2;
 
-		// Calculate length
-		motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
-		success = true;
-	}
-	return success;
+    // Calculate length
+    motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
+	return motion;
 }
 
-void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
+bool update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 	long elapsed = time - screen->motion_start;
 
 	// Get the current motion
 	ScreenMotion* motion = ring_peek(pool);
 	if (!motion) {
-		return;
+		return false;
 	}
 
 	// Check for active motion
@@ -134,7 +129,7 @@ void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 		// Get the next motion
 		if (nextBeamState(elapsed, motion, screen)) {
 			// Current motion is still active
-			return;
+			return true;
 		}
 		// Motion has completed
 		ring_pop(pool);
@@ -144,13 +139,14 @@ void update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 	// Get the next motion
 	motion = ring_peek(pool);
 	if (!motion) {
-		return;
+		return false;
 	}
 
 	// Determine new beam position
 	screen->motion_active = 1;
 	screen->motion_start = time;
 	nextBeamState(0, motion, screen);
+    return true;
 }
 
 // Scale position to a bit width

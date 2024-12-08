@@ -1,5 +1,7 @@
 #include <SPI.h>
 
+#define DEBUG true
+
 extern "C" {
 #include "command_parser.h"
 #include "ring_mem_pool.h"
@@ -101,6 +103,11 @@ void update_dac(const ScreenState* screen) {
     }
     x = screen->beam.x;
     y = screen->beam.y;
+    if (DEBUG) {
+        String msg = String("Updating screen: x=0x") + String(x, HEX) + " y=0x" + String(y, HEX);
+        Serial.write(msg.c_str());
+        Serial.write("\n");
+    }
     dac_write2(x, y);
 }
 
@@ -185,37 +192,59 @@ void checkForCommand(void) {
     }
 
     // Run command
-    int success = 1;
+    bool success = false;
+    ScreenMotion* motion = nullptr;
     switch (cmd.base.type) {
     case Cmd_Point:
-        success = screen_push_point(&motion_pool, (PointCmd*)&cmd);
+        motion = (ScreenMotion*)screen_push_point(&motion_pool, (PointCmd*)&cmd);
         break;
     case Cmd_Line:
-        success = screen_push_line(&motion_pool, (LineCmd*)&cmd);
+        motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd);
         break;
     case Cmd_Scale:
         main_screen.x_width = cmd.scale.x_width;
         main_screen.y_width = cmd.scale.y_width;
+        success = true;
         break;
     case Cmd_Speed:
         main_screen.hold_time = cmd.speed.hold_time;
         main_screen.speed     = cmd.speed.speed;
+        success = true;
         break;
     case Cmd_Noop:
         break;
     }
 
     Serial.print(commandToString((Command*)&cmd) + "\n");
-    Serial.print((success) ? "OK" : "FAILED");
+    Serial.print((success) ? "OK" :
+                 (motion)  ? (String("New Motion: 0x") + String((size_t)(motion), HEX) + " " + motionToString(motion)).c_str() :
+                             "FAILED");
+    Serial.print("\n");
     printPrompt();
 }
 
 void loop() {
-    /*
+    //*
     // Check for command, then update the screen
-    checkForCommand();
-    update_screen(micros(), &main_screen, &motion_pool);
+    bool active = update_screen(micros(), &main_screen, &motion_pool);
+
+    // Handle debug
+    static const ScreenMotion* last_motion = nullptr;
+    const ScreenMotion* next_motion = ring_peek(&motion_pool);
+    if (DEBUG && last_motion != next_motion && next_motion) {
+        String full_msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
+        Serial.write(full_msg.c_str());
+        Serial.write("\n");
+        last_motion = next_motion;
+    }
+
+    // Update the screen
     update_dac(&main_screen);
+
+    // Handle command check
+    if (!active || !DEBUG) {
+        checkForCommand();
+    }
     /*/
     // Make a 1kHz sawtooth wave
     long now = millis() % 1000;
