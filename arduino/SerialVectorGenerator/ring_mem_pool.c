@@ -107,15 +107,14 @@ void* ring_get(RingMemPool* ring, int size) {
 
 void* ring_peek(const RingMemPool* ring) {
 	// Error guard
-	if (ring->last_err == RING_CRITICAL) return 0;
+	if (ring->last_err == RING_CRITICAL) return NULL;
 
 	// Do nothing if there's nothing to pop
 	if (ring->head == ring->tail) {
 		return NULL; // Nothing to pop
 	}
 
-	RingEntryHdr* hdr = &ring->memory[ring->tail];
-	return &ring->memory[ring->tail + sizeof(hdr)];
+	return &ring->memory[ring->tail + sizeof(RingEntryHdr)];
 }
 
 // Clear an entry from the ring
