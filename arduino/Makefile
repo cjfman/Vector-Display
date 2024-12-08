@@ -15,7 +15,7 @@ upload: all
 	arduino-cli upload -p $(BOARD) --fqbn $(FQBN) $(PROJECT)
 
 connect:
-	minicom -D $(BOARD) -b 9600
+	minicom -D $(BOARD) -b 115200
 
 clean:
 	arduino-cli compile --clean --fqbn $(FQBN) $(PROJECT)

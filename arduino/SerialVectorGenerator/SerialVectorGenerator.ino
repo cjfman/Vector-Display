@@ -7,11 +7,12 @@ extern "C" {
 }
 
 #define BAUD 115200
-#define DAC_SYNC 12
+#define DAC_SYNC 9
 #define DAC_LDAC 8
 #define DAC_CLR  7
 #define DAC_RSET 4
-#define DAC_CLK_SPEED 5000000 // 5MHz / 200ns
+//#define DAC_CLK_SPEED 5000000 // 5MHz / 200ns
+#define DAC_CLK_SPEED 100000 // 100KHz
 
 char motion_mem[100];
 RingMemPool motion_pool = {0};
@@ -65,7 +66,7 @@ void dac_write(uint16_t val) {
     // Write data
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
-    SPI.transfer(val, 16);
+    SPI.transfer16(val);
     digitalWrite(DAC_SYNC, HIGH);
     SPI.endTransaction();
 
@@ -77,10 +78,11 @@ void dac_write(uint16_t val) {
 
 void dac_write2(uint16_t x, uint16_t y) {
     // Write data
+    // X
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
-    SPI.transfer(x, 16);
-    SPI.transfer(y, 16);
+    SPI.transfer16(x);
+    SPI.transfer16(y);
     digitalWrite(DAC_SYNC, HIGH);
     SPI.endTransaction();
 
@@ -115,7 +117,8 @@ void setup() {
     pinMode(DAC_RSET, OUTPUT);
     dac_reset();
 
-    // Set up serial
+    // Set up comms
+    SPI.begin();
     Serial.begin(BAUD);
     Serial.print("Vector Generator Command Terminal\n");
 
@@ -215,7 +218,11 @@ void loop() {
     update_dac(&main_screen);
     /*/
     // Make a 1kHz sawtooth wave
-    dac_write((millis() * 1000 / (0xFFFF)) & 0xFFFF);
+    long now = millis() % 1000;
+    uint16_t val1 = (now * 0xFFFF / 1000) & 0xFFFF;
+    uint16_t val2 = ((now-250) * 0xFFFF / 1000) & 0xFFFF;
+    //Serial.write((String("val: ") + val + "\n").c_str());
+    dac_write2(val1, val2);
     delay(1);
     //*/
 }
