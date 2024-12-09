@@ -97,12 +97,14 @@ void dac_write2(uint16_t x, uint16_t y) {
 void update_dac(const ScreenState* screen) {
     static uint16_t x = 0;
     static uint16_t y = 0;
-    if (screen->beam.x == x && screen->beam.y == y) {
+    uint16_t new_x = position_to_binary(screen->beam.x, screen->x_width, 16, true);
+    uint16_t new_y = position_to_binary(screen->beam.y, screen->y_width, 16, true);
+    if (new_x == x && new_y == y) {
         // Nothing to do
         return;
     }
-    x = screen->beam.x;
-    y = screen->beam.y;
+    x = new_x;
+    y = new_y;
     if (DEBUG) {
         String msg = String("Updating screen: x=0x") + String(x, HEX) + " y=0x" + String(y, HEX);
         Serial.write(msg.c_str());
@@ -202,8 +204,10 @@ void checkForCommand(void) {
         motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd);
         break;
     case Cmd_Scale:
-        main_screen.x_width = cmd.scale.x_width;
-        main_screen.y_width = cmd.scale.y_width;
+        main_screen.x_width  = cmd.scale.x_width;
+        main_screen.y_width  = cmd.scale.y_width;
+        main_screen.x_offset = cmd.scale.x_offset;
+        main_screen.y_offset = cmd.scale.y_offset;
         success = true;
         break;
     case Cmd_Speed:
