@@ -20,23 +20,25 @@
 
 
 static bool calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
-	if (elapsed >= screen->hold_time) {
-		// Motion is complete
-		return false;
-	}
 	beam->x = motion->x;
 	beam->y = motion->y;
+	if (elapsed >= screen->hold_time) {
+		// Motion is complete
+        beam->a = 0;
+		return false;
+	}
 	beam->a = 1;
 	return true;
 }
 
-static int calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+static bool calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
 	// Dert: Distance = Rate * time
 	float moved = screen->speed * elapsed;
 	if (moved > motion->length) {
 		// Motion is complete
         beam->x = motion->x2;
         beam->y = motion->y2;
+        beam->a = 0;
 		return false;
 	}
 
@@ -64,17 +66,12 @@ bool nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen)
 		beam.a = 0;
 	}
 
-	if (active) {
-		// Bounds check
-		beam.x = max(min(beam.x, screen->x_width - screen->x_offset), -screen->x_offset);
-		beam.y = max(min(beam.y, screen->y_width - screen->y_offset), -screen->y_offset);
-		screen->beam = beam;
-	}
-	else {
-		screen->beam.a = 0;
-	}
+    // Bounds check
+    beam.x = max(min(beam.x, screen->x_width - screen->x_offset), -screen->x_offset);
+    beam.y = max(min(beam.y, screen->y_width - screen->y_offset), -screen->y_offset);
+    screen->beam = beam;
 	
-	return !!active;
+	return active;
 }
 
 void screen_init(ScreenState* screen) {
