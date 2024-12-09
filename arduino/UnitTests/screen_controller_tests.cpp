@@ -18,8 +18,8 @@ protected:
         // Assumes default values of
         // x_width   = 100
         // y_width   = 100
-        // speed     = 1
         // hold_time = 1000
+        this->screen.speed = 10;
     }
 
     char pool_mem[1<<10];
@@ -67,6 +67,30 @@ TEST_F(ScreenControllerTest, lineFromOrigin) {
     EXPECT_EQ(3, motion->x2);
     EXPECT_EQ(4, motion->y2);
     EXPECT_EQ(5, motion->length);
+}
+
+TEST_F(ScreenControllerTest, lineThroughOrigin) {
+    // Create line command and push it to the screen
+    // 4-5-6 right triangle
+    LineCmd cmd = {
+        {}, // base
+        -3, // x1
+        -4, // y1
+        3,  // x2
+        4,  // y2
+    };
+    ASSERT_TRUE(screen_push_line(&this->pool, &cmd));
+
+    // Read motion from pool
+    LineMotion* motion = (LineMotion*)ring_peek(&this->pool);
+    ASSERT_EQ(RING_OK, this->pool.last_err);
+    ASSERT_EQ(sizeof(LineMotion), (unsigned)ring_pop(&this->pool));
+    ASSERT_EQ(SM_Line, motion->base.type);
+    EXPECT_EQ(-3, motion->x1);
+    EXPECT_EQ(-4, motion->y1);
+    EXPECT_EQ(3,  motion->x2);
+    EXPECT_EQ(4,  motion->y2);
+    EXPECT_EQ(10, motion->length);
 }
 
 TEST_F(ScreenControllerTest, lineShifted) {
@@ -191,7 +215,7 @@ TEST_F(ScreenControllerTest, updateScreenBounds) {
     ring_pop(&this->pool);
 }
 
-TEST_F(ScreenControllerTest, updateScreenLine) {
+TEST_F(ScreenControllerTest, updateScreenLineFromOrigin) {
     LineCmd cmd = {
         {}, // base
         0,  // x1
@@ -204,7 +228,7 @@ TEST_F(ScreenControllerTest, updateScreenLine) {
 
     // t = 0us; 0% of line
     update_screen(0, &this->screen, &this->pool);
-    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(1, this->screen.beam.a);
     EXPECT_EQ(0, this->screen.beam.x);
     EXPECT_EQ(0, this->screen.beam.y);
 
@@ -240,6 +264,62 @@ TEST_F(ScreenControllerTest, updateScreenLine) {
 
     // t > 5us; >100% of line
     update_screen(6, &this->screen, &this->pool);
+    EXPECT_EQ(0,  this->screen.beam.a);
+}
+
+TEST_F(ScreenControllerTest, updateScreenLineCornerToCorner) {
+    this->screen.x_width  = 200;
+    this->screen.y_width  = 200;
+    this->screen.x_offset = 100;
+    this->screen.y_offset = 100;
+    LineCmd cmd = {
+        {},  // base
+        -30, // x1
+        -40, // y1
+        30,  // x2
+        40,  // y2
+    };
+    // Line length of 50
+    screen_push_line(&this->pool, &cmd);
+
+    // t = 0us; 0% of line
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(-30, this->screen.beam.x);
+    EXPECT_EQ(-40, this->screen.beam.y);
+
+    // t = 1us; 20% of line
+    update_screen(2, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(-18, this->screen.beam.x);
+    EXPECT_EQ(-24, this->screen.beam.y);
+
+    // t = 2us; 40% of line
+    update_screen(4, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(-6, this->screen.beam.x);
+    EXPECT_EQ(-8, this->screen.beam.y);
+
+    // t = 3us; 60% of line
+    update_screen(6, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(6, this->screen.beam.x);
+    EXPECT_EQ(8, this->screen.beam.y);
+
+    // t = 4us; 80% of line
+    update_screen(8, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(18, this->screen.beam.x);
+    EXPECT_EQ(24, this->screen.beam.y);
+
+    // t = 5us; 100% of line
+    update_screen(10, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(30, this->screen.beam.x);
+    EXPECT_EQ(40, this->screen.beam.y);
+
+    // t > 5us; >100% of line
+    update_screen(11, &this->screen, &this->pool);
     EXPECT_EQ(0,  this->screen.beam.a);
 }
 

@@ -43,8 +43,8 @@ static bool calcLine(int elapsed, const LineMotion* motion, const ScreenState* s
 	}
 
 	// Calculate movement in each dimention
-	beam->x = (motion->x2 - motion->x1) * moved / motion->length;
-	beam->y = (motion->y2 - motion->y1) * moved / motion->length;
+	beam->x = (motion->x2 - motion->x1) * moved / motion->length + motion->x1;
+	beam->y = (motion->y2 - motion->y1) * moved / motion->length + motion->y1;
 	beam->a = 1;
 	return true;
 }
