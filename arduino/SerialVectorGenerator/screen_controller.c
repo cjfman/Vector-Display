@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define DEBUG true
+#define DEBUG false
 
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
@@ -35,6 +35,8 @@ static int calcLine(int elapsed, const LineMotion* motion, const ScreenState* sc
 	float moved = screen->speed * elapsed;
 	if (moved > motion->length) {
 		// Motion is complete
+        beam->x = motion->x2;
+        beam->y = motion->y2;
 		return false;
 	}
 
@@ -79,8 +81,8 @@ void screen_init(ScreenState* screen) {
 	memset(screen, '\0', sizeof(ScreenState));
 	screen->x_width   = 100;
 	screen->y_width   = 100;
-	screen->speed     = 10;     // 10 points / microsecond
-	screen->hold_time = 1000;   // 1 ms
+	screen->speed     = 0.01;  // points / microsecond
+	screen->hold_time = 1000;  // 1 ms
 }
 
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
