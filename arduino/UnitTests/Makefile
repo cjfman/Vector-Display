@@ -44,7 +44,7 @@ DEFINES = -D DEBUG \
 		  #-D NO_PERPHS \
 		  #-D NO_PORTS
 
-FLAGS = -I$(USER_DIR) -IGtest/include $(DEFINES)
+FLAGS = -I$(USER_DIR) -I$(GTEST_DIR)/include $(DEFINES)
 
 # Flags passed to the C++ compiler.
 CXXFLAGS += -g -Wall -Wextra $(FLAGS)
@@ -121,7 +121,7 @@ $(TEST_OBJS): %.cpp.o: %.cpp
 #	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 $(TARGET) : gtest_main.a $(OBJS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $(notdir $^) -o $(TARGET) 
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -pthread $(notdir $^) -o $(TARGET)
 
 
 #########
