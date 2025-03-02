@@ -323,6 +323,32 @@ TEST_F(ScreenControllerTest, updateScreenLineCornerToCorner) {
     EXPECT_EQ(0,  this->screen.beam.a);
 }
 
+TEST_F(ScreenControllerTest, emtpySequence) {
+    // Before start is called
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_FALSE(sequence_end(&this->screen)) << "End should fail unless start has been called";
+
+    // Start and end
+    ASSERT_TRUE(sequence_start(&this->screen));
+    ASSERT_FALSE(sequence_start(&this->screen)) << "Start should fail when called for a second time before end is called";
+    ASSERT_TRUE(sequence_end(&this->screen));
+
+    // Clear
+    ASSERT_FALSE(sequence_end(&this->screen)) << "End should fail when called for a second time until start has been called again";
+    ASSERT_FALSE(sequence_start(&this->screen)) << "Start should fail when called for a second time before end is called";
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+
+    // Mid sequence clear
+    ASSERT_TRUE(sequence_start(&this->screen));
+    ASSERT_FALSE(sequence_start(&this->screen)) << "Start should fail when called for a second time before end is called";
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_FALSE(sequence_end(&this->screen)) << "End should fail unless start has been called";
+    ASSERT_TRUE(sequence_start(&this->screen));
+    ASSERT_TRUE(sequence_end(&this->screen));
+}
+
 TEST(ScreenController, unsignedPositionTo16Bits) {
     // Scale 10
     EXPECT_EQ(0x0000, position_to_binary(0,  10,  16, false));
