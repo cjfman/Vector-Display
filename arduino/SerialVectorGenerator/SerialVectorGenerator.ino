@@ -1,6 +1,6 @@
 #include <SPI.h>
 
-#define PROMPT false
+#define PROMPT true
 #define DEBUG false
 
 extern "C" {
@@ -137,6 +137,10 @@ void setup() {
     // Initialize memory
     screen_init(&main_screen);
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
+    main_screen.x_width  = 200;
+    main_screen.y_width  = 200;
+    main_screen.x_offset = 100;
+    main_screen.y_offset = 100;
 
     // Print prompt
     if (PROMPT) printPrompt();
