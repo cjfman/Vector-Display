@@ -229,12 +229,14 @@ void checkForCommand(void) {
     case Cmd_Sequence:
         if (cmd.sequence.start) {
             success = sequence_start(&main_screen);
+            if (success) ring_reset(&motion_pool);
         }
         else if (cmd.sequence.end) {
             success = sequence_end(&main_screen);
         }
         else if (cmd.sequence.clear) {
             success = sequence_clear(&main_screen);
+            if (success) ring_reset(&motion_pool);
         }
     case Cmd_Noop:
         break;

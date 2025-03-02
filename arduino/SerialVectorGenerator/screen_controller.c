@@ -80,7 +80,7 @@ void screen_init(ScreenState* screen) {
     screen->speed     = 0.01;  // points / microsecond
     screen->hold_time = 1000;  // 1 ms
     screen->sequence_enabled = false;
-    screen->sequence_size = -1;
+    screen->sequence_idx = -1;
 }
 
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
