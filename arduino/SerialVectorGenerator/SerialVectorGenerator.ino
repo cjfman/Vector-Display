@@ -230,8 +230,24 @@ void checkForCommand(void) {
         main_screen.speed     = cmd.speed.speed;
         success = true;
         break;
+    case Cmd_Sequence:
+        if (cmd.sequence.start) {
+            success = sequence_start(&main_screen);
+            if (success) ring_reset(&motion_pool);
+        }
+        else if (cmd.sequence.end) {
+            success = sequence_end(&main_screen);
+        }
+        else if (cmd.sequence.clear) {
+            success = sequence_clear(&main_screen);
+            if (success) ring_reset(&motion_pool);
+        }
     case Cmd_Noop:
         break;
+    }
+
+    if (motion != NULL && main_screen.sequence_enabled) {
+        success = add_to_sequence(&main_screen, motion);
     }
 
     if (PROMPT) {

@@ -323,6 +323,74 @@ TEST_F(ScreenControllerTest, updateScreenLineCornerToCorner) {
     EXPECT_EQ(0,  this->screen.beam.a);
 }
 
+TEST_F(ScreenControllerTest, emtpySequence) {
+    // Before start is called
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_FALSE(sequence_end(&this->screen)) << "End should fail unless start has been called";
+
+    // Start and end
+    ASSERT_TRUE(sequence_start(&this->screen));
+    EXPECT_TRUE(this->screen.sequence_enabled);
+    ASSERT_FALSE(sequence_start(&this->screen)) << "Start should fail when called for a second time before end is called";
+    ASSERT_TRUE(sequence_end(&this->screen));
+    EXPECT_TRUE(this->screen.sequence_enabled);
+
+    // Clear
+    ASSERT_FALSE(sequence_end(&this->screen)) << "End should fail when called for a second time until start has been called again";
+    ASSERT_FALSE(sequence_start(&this->screen)) << "Start should fail when called for a second time before end is called";
+    EXPECT_TRUE(this->screen.sequence_enabled);
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    EXPECT_FALSE(this->screen.sequence_enabled);
+
+    // Mid sequence clear
+    ASSERT_TRUE(sequence_start(&this->screen));
+    EXPECT_TRUE(this->screen.sequence_enabled);
+    ASSERT_FALSE(sequence_start(&this->screen)) << "Start should fail when called for a second time before end is called";
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    EXPECT_FALSE(this->screen.sequence_enabled);
+    ASSERT_TRUE(sequence_clear(&this->screen)) << "Reset should always work";
+    ASSERT_FALSE(sequence_end(&this->screen)) << "End should fail unless start has been called";
+    ASSERT_TRUE(sequence_start(&this->screen));
+    EXPECT_TRUE(this->screen.sequence_enabled);
+    ASSERT_TRUE(sequence_end(&this->screen));
+    EXPECT_TRUE(this->screen.sequence_enabled);
+}
+
+TEST_F(ScreenControllerTest, basicSequence) {
+    ASSERT_TRUE(sequence_start(&this->screen));
+    ASSERT_TRUE(this->screen.sequence_enabled);
+
+    // Motion one
+    ScreenMotion motion1;
+    add_to_sequence(&this->screen, &motion1);
+    ASSERT_EQ(1, this->screen.sequence_size);
+    EXPECT_EQ(-1, this->screen.sequence_idx);
+    EXPECT_EQ(&motion1, this->screen.sequence[0]);
+
+    // Motion two
+    ScreenMotion motion2;
+    add_to_sequence(&this->screen, &motion2);
+    ASSERT_EQ(2, this->screen.sequence_size);
+    EXPECT_EQ(-1, this->screen.sequence_idx);
+    EXPECT_EQ(&motion2, this->screen.sequence[1]);
+
+    // Motion three
+    ScreenMotion motion3;
+    add_to_sequence(&this->screen, &motion3);
+    ASSERT_EQ(3, this->screen.sequence_size);
+    EXPECT_EQ(-1, this->screen.sequence_idx);
+    EXPECT_EQ(&motion3, this->screen.sequence[2]);
+
+    // End and clear
+    ASSERT_TRUE(sequence_end(&this->screen));
+    EXPECT_TRUE(this->screen.sequence_enabled);
+    EXPECT_EQ(0, this->screen.sequence_idx);
+    ASSERT_TRUE(sequence_clear(&this->screen));
+    EXPECT_FALSE(this->screen.sequence_enabled);
+    EXPECT_EQ(-1, this->screen.sequence_idx);
+}
+
 TEST(ScreenController, unsignedPositionTo16Bits) {
     // Scale 10
     EXPECT_EQ(0x0000, position_to_binary(0,  10,  16, false));

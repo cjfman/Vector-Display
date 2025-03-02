@@ -11,6 +11,15 @@ void ring_init(RingMemPool* ring, void* memory, int size) {
 	ring->last_err = RING_OK;
 }
 
+void ring_reset(RingMemPool* ring) {
+	int size     = ring->size;
+	void* memory = ring->memory;
+	memset(ring, '\0', sizeof(RingMemPool));
+	ring->size     = size;
+	ring->memory   = memory;
+	ring->last_err = RING_OK;
+}
+
 // Check how much contiguous memory is available
 // Only a writer may call this
 int ring_remaining(const RingMemPool* ring) {

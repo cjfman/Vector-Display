@@ -8,11 +8,13 @@
 #include "ring_mem_pool.h"
 
 // cmd prefixes
-const char* cmd_set[Cmd_Num] = {
+const char* cmd_set[Cmd_NUM] = {
 	"scale",
 	"point",
 	"line",
+	"speed",
 	"noop",
+	"sequence",
 };
 
 // Ring buffer
@@ -190,6 +192,25 @@ int cmdDecodeSpeed(SpeedCmd* cmd) {
 	return CMD_OK;
 }
 
+// Decode a sequence command
+int cmdDecodeSequence(SequenceCmd* cmd) {
+	const Command* base = &cmd->base;
+	if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
+	if (strcmp(base->args, "start") == 0) {
+		cmd->start = true;
+	}
+	else if (strcmp(base->args, "end") == 0) {
+		cmd->end = true;
+	}
+	else if (strcmp(base->args, "clear") == 0) {
+		cmd->clear = true;
+	}
+	else {
+		return CMD_ERR_BAD_ARG;
+	}
+	return CMD_OK;
+}
+
 // Parse a command line
 int cmdParse(CommandUnion* cmd, char* buf, int len) {
 	// Command arguments are space separated
@@ -239,6 +260,10 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
         cmd->base.type = Cmd_Speed;
 		decode_fn = (DecodeFn)cmdDecodeSpeed;
     }
+	else if (strcmp(cmd_set[Cmd_Sequence], cmd_start) == 0) {
+        cmd->base.type = Cmd_Sequence;
+		decode_fn = (DecodeFn)cmdDecodeSequence;
+    }
 	else if (strcmp(cmd_set[Cmd_Noop], cmd_start) == 0) {
         cmd->base.type = Cmd_Noop;
     }
@@ -274,6 +299,8 @@ const char* cmdErrToText(int errcode) {
         return "Wrong number of arguments";
     case CMD_ERR_PARSE:
         return "Parse error";
+	case CMD_ERR_BAD_ARG:
+		return "Bad argument";
     default:
         return "Unknown command error";
     }

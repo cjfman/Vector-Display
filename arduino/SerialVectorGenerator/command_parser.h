@@ -1,6 +1,8 @@
 #ifndef CONTROL_PARSER_HH
 #define CONTROL_PARSER_HH
 
+#include <stdbool.h>
+
 #include "ring_mem_pool.h"
 
 #define CMD_BUF_SIZE 256
@@ -16,14 +18,16 @@
 #define CMD_ERR_TOO_MANY_ARGS -6
 #define CMD_ERR_WRONG_NUM_ARGS -7
 #define CMD_ERR_PARSE -8
+#define CMD_ERR_BAD_ARG -9
 
 typedef enum CommandType {
-	Cmd_Scale,
+	Cmd_Scale = 0,
     Cmd_Point,
 	Cmd_Line,
 	Cmd_Speed,
+	Cmd_Sequence,
     Cmd_Noop,
-	Cmd_Num,
+	Cmd_NUM,
 } CommandType;
 
 // Command formats
@@ -79,12 +83,20 @@ typedef struct SpeedCmd {
 	float speed;
 } SpeedCmd;
 
+typedef struct SequenceCmd {
+	Command base;
+	bool start;
+	bool end;
+	bool clear;
+} SequenceCmd;
+
 typedef union CmdUnion {
-	Command  base;
-	ScaleCmd scale;
-	PointCmd point;
-	LineCmd  line;
-	SpeedCmd speed;
+	Command     base;
+	ScaleCmd    scale;
+	PointCmd    point;
+	LineCmd     line;
+	SpeedCmd    speed;
+	SequenceCmd sequence;
 } CommandUnion;
 
 void clearCache(void);

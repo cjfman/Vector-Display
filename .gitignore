@@ -18,3 +18,8 @@ __pycache__/
 ## C compiler files
 *.o
 *.a
+
+## Diptrace
+*.dch\~
+*.dip\~
+Diptrace/*/*.zip
