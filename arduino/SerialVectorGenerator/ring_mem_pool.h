@@ -25,6 +25,7 @@ typedef struct RingMemPool {
 } RingMemPool;
 
 void ring_init(RingMemPool* ring, void* memory, int size);
+void ring_reset(RingMemPool* ring);
 int ring_remaining(const RingMemPool* ring);
 void* ring_get(RingMemPool* ring, int size);
 void* ring_peek(const RingMemPool* ring);

@@ -18,7 +18,6 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })      \
 
-
 static inline bool calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
 	beam->x = motion->x;
 	beam->y = motion->y;
@@ -80,6 +79,8 @@ void screen_init(ScreenState* screen) {
 	screen->y_width   = 100;
 	screen->speed     = 0.01;  // points / microsecond
 	screen->hold_time = 1000;  // 1 ms
+	screen->sequence_enabled = false;
+	screen->sequence_size = -1;
 }
 
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
@@ -118,7 +119,9 @@ bool update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 	long elapsed = time - screen->motion_start;
 
 	// Get the current motion
-	ScreenMotion* motion = ring_peek(pool);
+	ScreenMotion* motion = (!screen->sequence_enabled) ? ring_peek(pool)                        :
+		                   (screen->sequence_idx >= 0) ? screen->sequence[screen->sequence_idx] :
+						                                 NULL                                   ;
 	if (!motion) {
 		return false;
 	}
@@ -131,12 +134,20 @@ bool update_screen(long time, ScreenState* screen, RingMemPool* pool) {
 			return true;
 		}
 		// Motion has completed
-		ring_pop(pool);
+		if (!screen->sequence_enabled) {
+			ring_pop(pool);
+		}
+		else {
+			screen->sequence_idx = (screen->sequence_idx + 1) % screen->sequence_size;
+		}
 		screen->motion_active = 0;
 	}
 
 	// Get the next motion
 	motion = ring_peek(pool);
+	motion = (!screen->sequence_enabled) ? ring_peek(pool)                        :
+		     (screen->sequence_idx >= 0) ? screen->sequence[screen->sequence_idx] :
+						                   NULL                                   ;
 	if (!motion) {
 		return false;
 	}
@@ -161,3 +172,44 @@ uint16_t position_to_binary(int pos, int scale, unsigned bits, bool dipole) {
 	long max_value = (1l << bits) - 1;
 	return (uint16_t)((max_value * pos / scale) & 0xFFFF);
 }
+
+// Start loading a sequence
+bool sequence_start(ScreenState* screen) {
+	if (screen->sequence_size > 0) {
+		// Sequence start has already been called
+		return false;
+	}
+	screen->sequence_enabled = true;
+	return true;
+}
+
+// Stop loading a sequence
+bool sequence_end(ScreenState* screen) {
+	if (!screen->sequence_enabled || screen->sequence_idx >= 0) {
+		// There is no sequence to end, or it's currently running
+		return false;
+	}
+	screen->sequence_idx = 0;
+	return true;
+}
+
+// Clear any loaded sequence
+bool sequence_clear(ScreenState* screen) {
+	screen->sequence_enabled = false;
+	screen->sequence_size   = 0;
+	screen->sequence_idx    = -1;
+	return true;
+}
+
+// Add to a sequence
+bool add_to_sequence(ScreenState* screen, const ScreenMotion* motion) {
+	if (!screen->sequence_enabled
+		|| screen->sequence_size >= SEQ_LEN
+		|| screen->sequence_idx >= 0
+	) {
+		return false;
+	}
+	screen->sequence[screen->sequence_size++] = motion;
+	return true;
+}
+		
