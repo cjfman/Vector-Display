@@ -35,7 +35,7 @@ typedef struct LineMotion {
     int y1;
     int x2;
     int y2;
-    float length; // Should this be a float?
+    double length;
 } LineMotion;
 
 typedef struct ScreenState {

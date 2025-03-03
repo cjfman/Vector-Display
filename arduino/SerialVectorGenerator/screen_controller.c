@@ -21,7 +21,7 @@
 static inline bool calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
     beam->x = motion->x;
     beam->y = motion->y;
-    if (elapsed >= screen->hold_time) {
+    if (elapsed / 1000 >= screen->hold_time) {
         // Motion is complete
         beam->a = 0;
         return false;
@@ -32,7 +32,7 @@ static inline bool calcPoint(int elapsed, const PointMotion* motion, const Scree
 
 static inline bool calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
     // Dert: Distance = Rate * time
-    float moved = screen->speed * elapsed;
+    float moved = screen->speed * elapsed / 1000;
     if (moved > motion->length) {
         // Motion is complete
         beam->x = motion->x2;
@@ -69,7 +69,7 @@ bool nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen)
     beam.x = max(min(beam.x, screen->x_width - screen->x_offset), -screen->x_offset);
     beam.y = max(min(beam.y, screen->y_width - screen->y_offset), -screen->y_offset);
     screen->beam = beam;
-    
+
     return active;
 }
 
@@ -77,8 +77,8 @@ void screen_init(ScreenState* screen) {
     memset(screen, '\0', sizeof(ScreenState));
     screen->x_width   = 100;
     screen->y_width   = 100;
-    screen->speed     = 0.01;  // points / microsecond
-    screen->hold_time = 1000;  // 1 ms
+    screen->speed     = 2;  // points / millisecond
+    screen->hold_time = 1;  // 1 ms
     screen->sequence_enabled = false;
     screen->sequence_idx = -1;
 }

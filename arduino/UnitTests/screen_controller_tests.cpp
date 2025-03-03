@@ -19,7 +19,7 @@ protected:
         // x_width   = 100
         // y_width   = 100
         // hold_time = 1000
-        this->screen.speed = 10;
+        this->screen.speed = 10000;
     }
 
     char pool_mem[1<<10];
@@ -264,6 +264,59 @@ TEST_F(ScreenControllerTest, updateScreenLineFromOrigin) {
 
     // t > 5us; >100% of line
     update_screen(6, &this->screen, &this->pool);
+    EXPECT_EQ(0,  this->screen.beam.a);
+}
+
+TEST_F(ScreenControllerTest, updateScreenLineFromOriginSlow) {
+    LineCmd cmd = {
+        {}, // base
+        0,  // x1
+        0,  // y1
+        30, // x2
+        40, // y2
+    };
+    this->screen.speed = 0.1;
+    // Line length of 50
+    screen_push_line(&this->pool, &cmd);
+
+    // t = 0us; 0% of line
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(0, this->screen.beam.x);
+    EXPECT_EQ(0, this->screen.beam.y);
+
+    // t = 1us; 20% of line
+    update_screen(100000, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(6, this->screen.beam.x);
+    EXPECT_EQ(8, this->screen.beam.y);
+
+    // t = 2us; 40% of line
+    update_screen(200000, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(12, this->screen.beam.x);
+    EXPECT_EQ(16, this->screen.beam.y);
+
+    // t = 3us; 60% of line
+    update_screen(300000, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(18, this->screen.beam.x);
+    EXPECT_EQ(24, this->screen.beam.y);
+
+    // t = 4us; 80% of line
+    update_screen(400000, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(24, this->screen.beam.x);
+    EXPECT_EQ(32, this->screen.beam.y);
+
+    // t = 5us; 100% of line
+    update_screen(500000, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(30, this->screen.beam.x);
+    EXPECT_EQ(40, this->screen.beam.y);
+
+    // t > 5us; >100% of line
+    update_screen(600000, &this->screen, &this->pool);
     EXPECT_EQ(0,  this->screen.beam.a);
 }
 
