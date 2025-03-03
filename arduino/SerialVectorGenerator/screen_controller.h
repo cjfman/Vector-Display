@@ -54,7 +54,7 @@ typedef struct ScreenState {
     ScreenMotion* sequence[SEQ_LEN];
 } ScreenState;
 
-bool nextBeamState(const int elapsed, const ScreenMotion* cmd, ScreenState* screen);
+bool nextBeamState(const long elapsed, const ScreenMotion* cmd, ScreenState* screen);
 void screen_init(ScreenState* screen);
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd);
 LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd);

@@ -18,7 +18,7 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })      \
 
-static inline bool calcPoint(int elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
+static inline bool calcPoint(long elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
     beam->x = motion->x;
     beam->y = motion->y;
     if (elapsed / 1000 >= screen->hold_time) {
@@ -30,7 +30,7 @@ static inline bool calcPoint(int elapsed, const PointMotion* motion, const Scree
     return true;
 }
 
-static inline bool calcLine(int elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+static inline bool calcLine(long elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
     // Dert: Distance = Rate * time
     float moved = screen->speed * elapsed / 1000;
     if (moved > motion->length) {
@@ -48,7 +48,7 @@ static inline bool calcLine(int elapsed, const LineMotion* motion, const ScreenS
     return true;
 }
 
-bool nextBeamState(int elapsed, const ScreenMotion* motion, ScreenState* screen) {
+bool nextBeamState(long elapsed, const ScreenMotion* motion, ScreenState* screen) {
     BeamState beam;
     int active;
     switch (motion->type) {
