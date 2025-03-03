@@ -21,13 +21,13 @@
 #define CMD_ERR_BAD_ARG -9
 
 typedef enum CommandType {
-	Cmd_Scale = 0,
+    Cmd_Scale = 0,
     Cmd_Point,
-	Cmd_Line,
-	Cmd_Speed,
-	Cmd_Sequence,
+    Cmd_Line,
+    Cmd_Speed,
+    Cmd_Sequence,
     Cmd_Noop,
-	Cmd_NUM,
+    Cmd_NUM,
 } CommandType;
 
 // Command formats
@@ -56,47 +56,47 @@ typedef struct Command {
 } Command;
 
 typedef struct ScaleCmd {
-	Command base;
-	int x_width;
-	int y_width;
-	int x_offset;
-	int y_offset;
+    Command base;
+    int x_width;
+    int y_width;
+    int x_offset;
+    int y_offset;
 } ScaleCmd;
 
 typedef struct PointCmd {
-	Command base;
-	int x;
-	int y;
+    Command base;
+    int x;
+    int y;
 } PointCmd;
 
 typedef struct LineCmd {
-	Command base;
-	int x1;
-	int y1;
-	int x2;
-	int y2;
+    Command base;
+    int x1;
+    int y1;
+    int x2;
+    int y2;
 } LineCmd;
 
 typedef struct SpeedCmd {
-	Command base;
-	int hold_time;
-	float speed;
+    Command base;
+    int hold_time;
+    float speed;
 } SpeedCmd;
 
 typedef struct SequenceCmd {
-	Command base;
-	bool start;
-	bool end;
-	bool clear;
+    Command base;
+    bool start;
+    bool end;
+    bool clear;
 } SequenceCmd;
 
 typedef union CmdUnion {
-	Command     base;
-	ScaleCmd    scale;
-	PointCmd    point;
-	LineCmd     line;
-	SpeedCmd    speed;
-	SequenceCmd sequence;
+    Command     base;
+    ScaleCmd    scale;
+    PointCmd    point;
+    LineCmd     line;
+    SpeedCmd    speed;
+    SequenceCmd sequence;
 } CommandUnion;
 
 void clearCache(void);

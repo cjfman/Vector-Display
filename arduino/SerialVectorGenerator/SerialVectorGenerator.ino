@@ -163,7 +163,6 @@ void checkForCommand(void) {
         }
         return;
     }
-    String num = intToString(read_len);
 
     // Build command
     int errcode = buildCmd(cmd_buf, read_len);

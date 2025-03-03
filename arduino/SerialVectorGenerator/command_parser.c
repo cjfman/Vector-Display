@@ -9,12 +9,12 @@
 
 // cmd prefixes
 const char* cmd_set[Cmd_NUM] = {
-	"scale",
-	"point",
-	"line",
-	"speed",
-	"noop",
-	"sequence",
+    [Cmd_Scale]    = "scale",
+    [Cmd_Point]    = "point",
+    [Cmd_Line]     = "line",
+    [Cmd_Speed]    = "speed",
+    [Cmd_Sequence] = "sequence",
+    [Cmd_Noop]     = "noop",
 };
 
 // Ring buffer
@@ -125,10 +125,10 @@ int cmdBufLen(void) {
 // Get a command string from the command cache
 // and copy it into the buffer
 int getCmd(char* buf, int buf_len) {
-	// Check for a complete command
+    // Check for a complete command
     if (crlfPos() == -1) return 0;
 
-	// Get the command string
+    // Get the command string
     int cmd_len = commandSize();
     if (cmd_len == 0) {
         // This was a noop command
@@ -154,87 +154,87 @@ typedef int (*DecodeFn)(Command *);
 
 // Decode a scale command
 int cmdDecodeScale(ScaleCmd* cmd) {
-	const Command* base = &cmd->base;
-	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x_width  = atoi(base->args[0]);
-	cmd->y_width  = atoi(base->args[1]);
-	cmd->x_offset = atoi(base->args[2]);
-	cmd->y_offset = atoi(base->args[3]);
-	return CMD_OK;
+    const Command* base = &cmd->base;
+    if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
+    cmd->x_width  = atoi(base->args[0]);
+    cmd->y_width  = atoi(base->args[1]);
+    cmd->x_offset = atoi(base->args[2]);
+    cmd->y_offset = atoi(base->args[3]);
+    return CMD_OK;
 }
 
 // Decode a point command
 int cmdDecodePoint(PointCmd* cmd) {
-	const Command* base = &cmd->base;
-	if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x = atoi(base->args[0]);
-	cmd->y = atoi(base->args[1]);
-	return CMD_OK;
+    const Command* base = &cmd->base;
+    if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
+    cmd->x = atoi(base->args[0]);
+    cmd->y = atoi(base->args[1]);
+    return CMD_OK;
 }
 
 // Decode a line command
 int cmdDecodeLine(LineCmd* cmd) {
-	const Command* base = &cmd->base;
-	if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->x1 = atoi(base->args[0]);
-	cmd->y1 = atoi(base->args[1]);
-	cmd->x2 = atoi(base->args[2]);
-	cmd->y2 = atoi(base->args[3]);
-	return CMD_OK;
+    const Command* base = &cmd->base;
+    if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
+    cmd->x1 = atoi(base->args[0]);
+    cmd->y1 = atoi(base->args[1]);
+    cmd->x2 = atoi(base->args[2]);
+    cmd->y2 = atoi(base->args[3]);
+    return CMD_OK;
 }
 
 // Decode a speed command
 int cmdDecodeSpeed(SpeedCmd* cmd) {
-	const Command* base = &cmd->base;
-	if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
-	cmd->hold_time = atoi(base->args[0]);
-	cmd->speed     = atof(base->args[1]);
-	return CMD_OK;
+    const Command* base = &cmd->base;
+    if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
+    cmd->hold_time = atoi(base->args[0]);
+    cmd->speed     = atof(base->args[1]);
+    return CMD_OK;
 }
 
 // Decode a sequence command
 int cmdDecodeSequence(SequenceCmd* cmd) {
-	const Command* base = &cmd->base;
-	if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
-	if (strcmp(base->args, "start") == 0) {
-		cmd->start = true;
-	}
-	else if (strcmp(base->args, "end") == 0) {
-		cmd->end = true;
-	}
-	else if (strcmp(base->args, "clear") == 0) {
-		cmd->clear = true;
-	}
-	else {
-		return CMD_ERR_BAD_ARG;
-	}
-	return CMD_OK;
+    const Command* base = &cmd->base;
+    if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
+    if (strcmp(base->args[0], "start") == 0) {
+        cmd->start = true;
+    }
+    else if (strcmp(base->args[0], "end") == 0) {
+        cmd->end = true;
+    }
+    else if (strcmp(base->args[0], "clear") == 0) {
+        cmd->clear = true;
+    }
+    else {
+        return CMD_ERR_BAD_ARG;
+    }
+    return CMD_OK;
 }
 
 // Parse a command line
 int cmdParse(CommandUnion* cmd, char* buf, int len) {
-	// Command arguments are space separated
-	memset(cmd, '\0', sizeof(CommandUnion));
+    // Command arguments are space separated
+    memset(cmd, '\0', sizeof(CommandUnion));
     int count = 0;
-	char* cmd_start = buf;
-	int i;
+    char* cmd_start = buf;
+    int i;
     for (i = 0; i < len; i++) {
         if (buf[i] == ' ') {
-			// Trim off leading spaces
-			if (cmd_start[0] == ' ') {
-				cmd_start += 1;
-				continue;
-			}
+            // Trim off leading spaces
+            if (cmd_start[0] == ' ') {
+                cmd_start += 1;
+                continue;
+            }
 
-			// Safety check
+            // Safety check
             if (count == CMD_MAX_NUM_ARGS) return CMD_ERR_TOO_MANY_ARGS;
 
-			// Reached the end of an argument
+            // Reached the end of an argument
             buf[i] = '\0'; // Replace with null char
             // Pointer to argument
             cmd->base.args[count++] = &buf[++i];
         }
-		if (buf[i] == '\0') break;
+        if (buf[i] == '\0') break;
     }
     if (!count) return CMD_ERR_WRONG_NUM_ARGS;
 
@@ -246,35 +246,35 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
     int (*decode_fn)(Command* cmd) = NULL;
     if (strcmp(cmd_set[Cmd_Scale], cmd_start) == 0) {
         cmd->base.type = Cmd_Scale;
-		decode_fn = (DecodeFn)cmdDecodeScale;
+        decode_fn = (DecodeFn)cmdDecodeScale;
     }
-	else if (strcmp(cmd_set[Cmd_Point], cmd_start) == 0) {
+    else if (strcmp(cmd_set[Cmd_Point], cmd_start) == 0) {
         cmd->base.type = Cmd_Point;
-		decode_fn = (DecodeFn)cmdDecodePoint;
+        decode_fn = (DecodeFn)cmdDecodePoint;
     }
-	else if (strcmp(cmd_set[Cmd_Line], cmd_start) == 0) {
+    else if (strcmp(cmd_set[Cmd_Line], cmd_start) == 0) {
         cmd->base.type = Cmd_Line;
-		decode_fn = (DecodeFn)cmdDecodeLine;
+        decode_fn = (DecodeFn)cmdDecodeLine;
     }
-	else if (strcmp(cmd_set[Cmd_Speed], cmd_start) == 0) {
+    else if (strcmp(cmd_set[Cmd_Speed], cmd_start) == 0) {
         cmd->base.type = Cmd_Speed;
-		decode_fn = (DecodeFn)cmdDecodeSpeed;
+        decode_fn = (DecodeFn)cmdDecodeSpeed;
     }
-	else if (strcmp(cmd_set[Cmd_Sequence], cmd_start) == 0) {
+    else if (strcmp(cmd_set[Cmd_Sequence], cmd_start) == 0) {
         cmd->base.type = Cmd_Sequence;
-		decode_fn = (DecodeFn)cmdDecodeSequence;
+        decode_fn = (DecodeFn)cmdDecodeSequence;
     }
-	else if (strcmp(cmd_set[Cmd_Noop], cmd_start) == 0) {
+    else if (strcmp(cmd_set[Cmd_Noop], cmd_start) == 0) {
         cmd->base.type = Cmd_Noop;
     }
     else {
         return CMD_ERR_BAD_CMD;
     }
 
-	// Process command
-	if (decode_fn) {
-		return decode_fn((Command*)cmd);
-	}
+    // Process command
+    if (decode_fn) {
+        return decode_fn((Command*)cmd);
+    }
 
     return CMD_OK;
 }
@@ -299,8 +299,8 @@ const char* cmdErrToText(int errcode) {
         return "Wrong number of arguments";
     case CMD_ERR_PARSE:
         return "Parse error";
-	case CMD_ERR_BAD_ARG:
-		return "Bad argument";
+    case CMD_ERR_BAD_ARG:
+        return "Bad argument";
     default:
         return "Unknown command error";
     }
