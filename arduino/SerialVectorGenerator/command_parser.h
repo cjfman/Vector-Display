@@ -25,6 +25,7 @@ typedef enum CommandType {
     Cmd_Point,
     Cmd_Line,
     Cmd_Speed,
+    Cmd_Hold,
     Cmd_Sequence,
     Cmd_Set,
     Cmd_Unset,

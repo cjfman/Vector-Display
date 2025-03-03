@@ -225,9 +225,14 @@ void checkForCommand(void) {
         success = true;
         break;
     case Cmd_Speed:
-        main_screen.hold_time = cmd.speed.hold_time;
-        main_screen.speed     = cmd.speed.speed;
-        success = true;
+        if (cmd.speed.hold_time > 0) {
+            main_screen.hold_time = cmd.speed.hold_time;
+            success = true;
+        }
+        if (cmd.speed.speed > 0) {
+            main_screen.speed = cmd.speed.speed;
+            success = true;
+        }
         break;
     case Cmd_Sequence:
         if (cmd.sequence.start) {

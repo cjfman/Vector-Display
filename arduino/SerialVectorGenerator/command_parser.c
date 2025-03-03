@@ -13,6 +13,7 @@ const char* cmd_set[Cmd_NUM] = {
     [Cmd_Point]    = "point",
     [Cmd_Line]     = "line",
     [Cmd_Speed]    = "speed",
+    [Cmd_Hold]     = "hold",
     [Cmd_Sequence] = "sequence",
     [Cmd_Set]      = "set",
     [Cmd_Unset]    = "unset",
@@ -198,9 +199,16 @@ int cmdDecodeLine(LineCmd* cmd) {
 // Decode a speed command
 int cmdDecodeSpeed(SpeedCmd* cmd) {
     const Command* base = &cmd->base;
-    if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
+    if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
+    cmd->speed     = atof(base->args[0]);
+    return CMD_OK;
+}
+
+// Decode a hold command
+int cmdDecodeHold(SpeedCmd* cmd) {
+    const Command* base = &cmd->base;
+    if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->hold_time = atoi(base->args[0]);
-    cmd->speed     = atof(base->args[1]);
     return CMD_OK;
 }
 
@@ -277,7 +285,13 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
     }
     else if (strcmp(cmd_set[Cmd_Speed], cmd_start) == 0) {
         cmd->base.type = Cmd_Speed;
+        cmd->speed.hold_time = 0;
         decode_fn = (DecodeFn)cmdDecodeSpeed;
+    }
+    else if (strcmp(cmd_set[Cmd_Hold], cmd_start) == 0) {
+        cmd->base.type = Cmd_Speed; // This isn't a mistake
+        cmd->speed.speed = 0;
+        decode_fn = (DecodeFn)cmdDecodeHold;
     }
     else if (strcmp(cmd_set[Cmd_Sequence], cmd_start) == 0) {
         cmd->base.type = Cmd_Sequence;

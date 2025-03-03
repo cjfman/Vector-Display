@@ -50,6 +50,7 @@ String commandToString(const Command* cmd) {
     case Cmd_Line:
         return printLineCmd((const LineCmd*) cmd);
     case Cmd_Speed:
+    case Cmd_Hold:
         return printSpeedCmd((const SpeedCmd*) cmd);
     case Cmd_Sequence:
         return printSequenceCmd((const SequenceCmd*) cmd);
