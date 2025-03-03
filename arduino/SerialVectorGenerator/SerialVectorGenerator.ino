@@ -279,7 +279,6 @@ void checkForCommand(void) {
 }
 
 void loop() {
-    //*
     // Check for command, then update the screen
 
     long now = micros();
@@ -302,13 +301,4 @@ void loop() {
     if (!active || !DEBUG) {
         checkForCommand();
     }
-    /*/
-    // Make a 1kHz sawtooth wave
-    long now = millis() % 1000;
-    uint16_t val1 = (now * 0xFFFF / 1000) & 0xFFFF;
-    uint16_t val2 = ((now-250) * 0xFFFF / 1000) & 0xFFFF;
-    //Serial.write((String("val: ") + val + "\n").c_str());
-    dac_write2(val1, val2);
-    delay(1);
-    //*/
 }
