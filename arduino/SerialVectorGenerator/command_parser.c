@@ -34,8 +34,18 @@ int buildCmd(const char* new_cmd, int len) {
         clearCache();
         return CMD_ERR_CMD_TOO_LONG;
     }
-    memcpy(&cmd_buf[cmd_buf_len], new_cmd, len);
-    cmd_buf_len += len;
+//    memcpy(&cmd_buf[cmd_buf_len], new_cmd, len);
+//    cmd_buf_len += len;
+    for (int i = 0; i < len; i++) {
+        char c = new_cmd[i];
+        if (isprint(c) || c == '\r' || c == '\n') {
+            cmd_buf[cmd_buf_len++] = c;
+        }
+        else if (c == '\b' && cmd_buf_len > 0) {
+            // Backspace
+            cmd_buf_len--;
+        }
+    }
     return CMD_OK;
 }
 
@@ -115,7 +125,7 @@ int noopCommand(void) {
 }
 
 int commandComplete(void) {
-    return (crlfPos() != -1);
+    return (cmd_buf_len > 0 && crlfPos() != -1);
 }
 
 int cmdBufLen(void) {
@@ -236,7 +246,6 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
         }
         if (buf[i] == '\0') break;
     }
-    if (!count) return CMD_ERR_WRONG_NUM_ARGS;
 
     buf[i] = '\0'; // Mark end of last arg
     cmd->base.buf     = cmd_start;
