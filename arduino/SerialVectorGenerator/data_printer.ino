@@ -86,3 +86,10 @@ String motionToString(const ScreenMotion* motion) {
     }
     return String("Unknown screen motion type ") + motion->type;
 }
+
+String beamStateToString(const BeamState* state) {
+    return String("BeamState ")
+        + " x: " + state->x
+        + " y: " + state->y
+        + " active: " + state->a;
+}

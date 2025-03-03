@@ -251,11 +251,12 @@ void checkForCommand(void) {
     case Cmd_Unset:
         if (strcmp(cmd.set.name, "debug") == 0) {
             DEBUG = cmd.set.set;
+            success = true;
         }
         else if (strcmp(cmd.set.name, "prompt") == 0) {
             PROMPT = cmd.set.set;
+            success = true;
         }
-        success = true;
         break;
     case Cmd_Noop:
         success = true;
@@ -285,13 +286,32 @@ void loop() {
     bool active = update_screen(now, &main_screen, &motion_pool);
 
     // Handle debug
+    static long debug_start = -1;
     static const ScreenMotion* last_motion = nullptr;
+    static BeamState beam_state;
     const ScreenMotion* next_motion = ring_peek(&motion_pool);
-    if (DEBUG && last_motion != next_motion && next_motion && PROMPT) {
-        String full_msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
-        Serial.write(full_msg.c_str());
-        Serial.write("\n");
-        last_motion = next_motion;
+    if (DEBUG) {
+        if (debug_start < 0) debug_start = now;
+        String msg;
+        if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
+            msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
+            Serial.write(msg.c_str());
+            Serial.write("\n");
+            memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
+        }
+        if (last_motion != next_motion && next_motion && PROMPT) {
+            msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
+            Serial.write(msg.c_str());
+            Serial.write("\n");
+            last_motion = next_motion;
+        }
+
+        // Stop debug after 10 seconds
+        if (now - debug_start > 10000000l) {
+            debug_start = -1;
+            DEBUG = false;
+            printPrompt();
+        }
     }
 
     // Update the screen
