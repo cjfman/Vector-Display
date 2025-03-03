@@ -14,6 +14,8 @@ const char* cmd_set[Cmd_NUM] = {
     [Cmd_Line]     = "line",
     [Cmd_Speed]    = "speed",
     [Cmd_Sequence] = "sequence",
+    [Cmd_Set]      = "set",
+    [Cmd_Unset]    = "unset",
     [Cmd_Noop]     = "noop",
 };
 
@@ -221,6 +223,14 @@ int cmdDecodeSequence(SequenceCmd* cmd) {
     return CMD_OK;
 }
 
+// Decode Set/Unset command
+int cmdDecodeSet(SetCmd* cmd) {
+    const Command* base = &cmd->base;
+    if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
+    cmd->name = base->args[0];
+    return CMD_OK;
+}
+
 // Parse a command line
 int cmdParse(CommandUnion* cmd, char* buf, int len) {
     // Command arguments are space separated
@@ -272,6 +282,16 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
     else if (strcmp(cmd_set[Cmd_Sequence], cmd_start) == 0) {
         cmd->base.type = Cmd_Sequence;
         decode_fn = (DecodeFn)cmdDecodeSequence;
+    }
+    else if (strcmp(cmd_set[Cmd_Set], cmd_start) == 0) {
+        cmd->base.type = Cmd_Set;
+        cmd->set.set = true;
+        decode_fn = (DecodeFn)cmdDecodeSet;
+    }
+    else if (strcmp(cmd_set[Cmd_Unset], cmd_start) == 0) {
+        cmd->base.type = Cmd_Unset;
+        cmd->set.set = false;
+        decode_fn = (DecodeFn)cmdDecodeSet;
     }
     else if (strcmp(cmd_set[Cmd_Noop], cmd_start) == 0) {
         cmd->base.type = Cmd_Noop;

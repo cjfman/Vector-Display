@@ -1,7 +1,7 @@
 #include <SPI.h>
 
-#define PROMPT true
-#define DEBUG false
+bool PROMPT = true;
+bool DEBUG  = false;
 
 extern "C" {
 #include "command_parser.h"
@@ -241,7 +241,21 @@ void checkForCommand(void) {
             success = sequence_clear(&main_screen);
             if (success) ring_reset(&motion_pool);
         }
+        break;
+    case Cmd_Set:
+    case Cmd_Unset:
+        if (strcmp(cmd.set.name, "debug") == 0) {
+            DEBUG = cmd.set.set;
+        }
+        else if (strcmp(cmd.set.name, "prompt") == 0) {
+            PROMPT = cmd.set.set;
+        }
+        success = true;
+        break;
     case Cmd_Noop:
+        success = true;
+        break;
+    default:
         break;
     }
 

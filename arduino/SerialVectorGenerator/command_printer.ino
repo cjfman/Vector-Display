@@ -32,6 +32,15 @@ static inline String printSequenceCmd(const SequenceCmd* cmd) {
     return String("sequence ") + cmd->base.args[0];
 }
 
+static inline String printSetCmd(const SetCmd* cmd) {
+    if (cmd->set) {
+        return String("set ") + cmd->base.args[0];
+    }
+    else {
+        return String("unset ") + cmd->base.args[0];
+    }
+}
+
 String commandToString(const Command* cmd) {
     switch (cmd->type) {
     case Cmd_Scale:
@@ -44,6 +53,9 @@ String commandToString(const Command* cmd) {
         return printSpeedCmd((const SpeedCmd*) cmd);
     case Cmd_Sequence:
         return printSequenceCmd((const SequenceCmd*) cmd);
+    case Cmd_Set:
+    case Cmd_Unset:
+        return printSetCmd((const SetCmd*) cmd);
     case Cmd_Noop:
         return "noop";
     default:

@@ -26,6 +26,8 @@ typedef enum CommandType {
     Cmd_Line,
     Cmd_Speed,
     Cmd_Sequence,
+    Cmd_Set,
+    Cmd_Unset,
     Cmd_Noop,
     Cmd_NUM,
 } CommandType;
@@ -90,6 +92,12 @@ typedef struct SequenceCmd {
     bool clear;
 } SequenceCmd;
 
+typedef struct SetCmd {
+    Command base;
+    bool set;
+    const char* name;
+} SetCmd;
+
 typedef union CmdUnion {
     Command     base;
     ScaleCmd    scale;
@@ -97,6 +105,7 @@ typedef union CmdUnion {
     LineCmd     line;
     SpeedCmd    speed;
     SequenceCmd sequence;
+    SetCmd      set;
 } CommandUnion;
 
 void clearCache(void);
