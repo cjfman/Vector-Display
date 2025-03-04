@@ -84,8 +84,8 @@ static inline void dac_write2(uint16_t x, uint16_t y) {
     // X
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
-    SPI.transfer16(x);
     SPI.transfer16(y);
+    SPI.transfer16(x);
     digitalWrite(DAC_SYNC, HIGH);
     SPI.endTransaction();
 
