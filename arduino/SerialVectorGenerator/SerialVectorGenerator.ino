@@ -293,6 +293,7 @@ void loop() {
 
     long now = micros();
     bool active = update_screen(now, &main_screen, &motion_pool);
+    long after = micros();
 
     // Handle debug
     static long debug_start = -1;
@@ -302,6 +303,8 @@ void loop() {
     if (DEBUG) {
         if (debug_start < 0) debug_start = now;
         String msg;
+        msg = String("Screen update time ") + (after - now) + "us\n";
+        Serial.write(msg.c_str());
         if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
             msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
             Serial.write(msg.c_str());
