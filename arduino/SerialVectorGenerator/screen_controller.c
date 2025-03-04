@@ -32,7 +32,7 @@ static inline bool calcPoint(long elapsed, const PointMotion* motion, const Scre
 
 static inline bool calcLine(long elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
     // Dert: Distance = Rate * time
-    float moved = screen->speed * elapsed / 1000;
+    long moved = ((long)screen->speed * elapsed) / 1000;
     if (moved > motion->length) {
         // Motion is complete
         beam->x = motion->x2;
@@ -212,4 +212,3 @@ bool add_to_sequence(ScreenState* screen, const ScreenMotion* motion) {
     screen->sequence[screen->sequence_size++] = motion;
     return true;
 }
-
