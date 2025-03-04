@@ -161,9 +161,6 @@ void checkForCommand(void) {
             newline();
             printPrompt();
         }
-        else {
-            Serial.print("NAK\n");
-        }
         return;
     }
 
@@ -186,9 +183,6 @@ void checkForCommand(void) {
             Serial.print("\nNoop\n");
             printPrompt();
         }
-        else {
-            Serial.print("ACK\n");
-        }
         return;
     }
 
@@ -198,9 +192,6 @@ void checkForCommand(void) {
         if (PROMPT) {
             printErrorCode(errcode);
             printPrompt();
-        }
-        else {
-            Serial.print("NAK\n");
         }
         return;
     }
@@ -212,9 +203,6 @@ void checkForCommand(void) {
         if (PROMPT) {
             printErrorCode(errcode);
             printPrompt();
-        }
-        else {
-            Serial.print("NAK\n");
         }
         return;
     }
@@ -281,7 +269,6 @@ void checkForCommand(void) {
         success = add_to_sequence(&main_screen, motion);
     }
 
-    // Print prompt
     if (PROMPT) {
         Serial.print(commandToString((Command*)&cmd) + "\n");
         Serial.print((success) ? "OK" :
@@ -290,9 +277,6 @@ void checkForCommand(void) {
         Serial.print("\n");
         printPrompt();
     }
-    else {
-        Serial.print((success || motion) ? "ACK\n" : "NAK\n");
-    }
 }
 
 void loop() {
@@ -300,27 +284,25 @@ void loop() {
 
     long now = micros();
     bool active = update_screen(now, &main_screen, &motion_pool);
-    long after = micros();
 
     // Handle debug
-    String msg;
     static long debug_start = -1;
     static const ScreenMotion* last_motion = nullptr;
     static BeamState beam_state;
     const ScreenMotion* next_motion = ring_peek(&motion_pool);
     if (DEBUG) {
         if (debug_start < 0) debug_start = now;
-        msg = String("Screen render time ") + (after - now) + "us\n";
-        Serial.write(msg.c_str());
-
+        String msg;
         if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
             msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
             Serial.write(msg.c_str());
+            Serial.write("\n");
             memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
         }
         if (last_motion != next_motion && next_motion && PROMPT) {
             msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
             Serial.write(msg.c_str());
+            Serial.write("\n");
             last_motion = next_motion;
         }
 
