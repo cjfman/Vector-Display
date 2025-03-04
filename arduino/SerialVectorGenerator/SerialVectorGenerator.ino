@@ -161,6 +161,9 @@ void checkForCommand(void) {
             newline();
             printPrompt();
         }
+        else {
+            Serial.print("NAK\n");
+        }
         return;
     }
 
@@ -182,6 +185,9 @@ void checkForCommand(void) {
         if (PROMPT) {
             Serial.print("\nNoop\n");
             printPrompt();
+        }
+        else {
+            Serial.print("ACK\n");
         }
         return;
     }
@@ -276,6 +282,9 @@ void checkForCommand(void) {
                                  "FAILED");
         Serial.print("\n");
         printPrompt();
+    }
+    else {
+        Serial.print((success || motion) ? "ACK\n" : "NAK\n");
     }
 }
 
