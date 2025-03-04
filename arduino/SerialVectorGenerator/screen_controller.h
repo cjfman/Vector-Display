@@ -54,15 +54,27 @@ typedef struct ScreenState {
     ScreenMotion* sequence[SEQ_LEN];
 } ScreenState;
 
-bool nextBeamState(const long elapsed, const ScreenMotion* cmd, ScreenState* screen);
 void screen_init(ScreenState* screen);
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd);
 LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd);
 bool update_screen(long time, ScreenState* screen, RingMemPool* pool);
-uint16_t position_to_binary(int pos, int scale, unsigned bits, bool dipole);
 bool sequence_start(ScreenState* screen);
 bool sequence_end(ScreenState* screen);
 bool sequence_clear(ScreenState* screen);
 bool add_to_sequence(ScreenState* screen, const ScreenMotion* motion);
+
+// Scale position to a bit width
+static inline uint16_t position_to_binary(int pos, int scale, unsigned bits, bool dipole) {
+    bits = min(16, bits);
+    if (dipole) {
+        bits--;
+    }
+    else {
+        pos = max(0, pos);
+    }
+
+    long max_value = (1l << bits) - 1;
+    return (uint16_t)((max_value * pos / scale) & 0xFFFF);
+}
 
 #endif // SCREEN_CONTROLLER_HH

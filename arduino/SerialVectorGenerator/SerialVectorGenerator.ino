@@ -65,7 +65,7 @@ static inline void dac_reset(void) {
     digitalWrite(DAC_CLR, HIGH);
 }
 
-void dac_write(uint16_t val) {
+static inline void dac_write(uint16_t val) {
     // Write data
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
@@ -79,7 +79,7 @@ void dac_write(uint16_t val) {
     digitalWrite(DAC_LDAC, HIGH);
 }
 
-void dac_write2(uint16_t x, uint16_t y) {
+static inline void dac_write2(uint16_t x, uint16_t y) {
     // Write data
     // X
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
@@ -293,15 +293,15 @@ void loop() {
 
     long now = micros();
     bool active = update_screen(now, &main_screen, &motion_pool);
-    long after = micros();
 
     // Handle debug
     static long debug_start = -1;
-    static const ScreenMotion* last_motion = nullptr;
-    static BeamState beam_state;
-    const ScreenMotion* next_motion = ring_peek(&motion_pool);
     if (DEBUG) {
+        long after = micros();
         if (debug_start < 0) debug_start = now;
+        static BeamState beam_state;
+        static const ScreenMotion* last_motion = nullptr;
+        const ScreenMotion* next_motion = ring_peek(&motion_pool);
         String msg;
         msg = String("Screen update time ") + (after - now) + "us\n";
         Serial.write(msg.c_str());

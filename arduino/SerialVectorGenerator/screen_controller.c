@@ -42,13 +42,13 @@ static inline bool calcLine(long elapsed, const LineMotion* motion, const Screen
     }
 
     // Calculate movement in each dimention
-    beam->x = (motion->x2 - motion->x1) * moved / motion->length + motion->x1;
-    beam->y = (motion->y2 - motion->y1) * moved / motion->length + motion->y1;
+    beam->x = (long)((motion->x2 - motion->x1) * moved / motion->length) + motion->x1;
+    beam->y = (long)((motion->y2 - motion->y1) * moved / motion->length) + motion->y1;
     beam->a = 1;
     return true;
 }
 
-bool nextBeamState(long elapsed, const ScreenMotion* motion, ScreenState* screen) {
+static inline bool nextBeamState(long elapsed, const ScreenMotion* motion, ScreenState* screen) {
     BeamState beam;
     int active;
     switch (motion->type) {
@@ -144,7 +144,6 @@ bool update_screen(long time, ScreenState* screen, RingMemPool* pool) {
     }
 
     // Get the next motion
-    motion = ring_peek(pool);
     motion = (!screen->sequence_enabled) ? ring_peek(pool)                        :
              (screen->sequence_idx >= 0) ? screen->sequence[screen->sequence_idx] :
                                            NULL                                   ;
@@ -157,20 +156,6 @@ bool update_screen(long time, ScreenState* screen, RingMemPool* pool) {
     screen->motion_start = time;
     nextBeamState(0, motion, screen);
     return true;
-}
-
-// Scale position to a bit width
-uint16_t position_to_binary(int pos, int scale, unsigned bits, bool dipole) {
-    bits = min(16, bits);
-    if (dipole) {
-        bits--;
-    }
-    else {
-        pos = max(0, pos);
-    }
-
-    long max_value = (1l << bits) - 1;
-    return (uint16_t)((max_value * pos / scale) & 0xFFFF);
 }
 
 // Start loading a sequence
