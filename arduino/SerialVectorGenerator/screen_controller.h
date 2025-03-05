@@ -59,8 +59,8 @@ typedef struct ScreenState {
     int y_width;
     int x_offset;
     int y_offset;
-    int hold_time;     // Time to hold a point
-    float speed;       // Points moved in a microsecond
+    int hold_time; // Time to hold a point
+    int speed;     // Points moved in a microsecond
     long motion_start; // Time when current motion started
     BeamState beam;
     int motion_active;

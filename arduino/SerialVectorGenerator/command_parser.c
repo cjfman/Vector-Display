@@ -200,7 +200,7 @@ int cmdDecodeLine(LineCmd* cmd) {
 int cmdDecodeSpeed(SpeedCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
-    cmd->speed     = atof(base->args[0]);
+    cmd->speed = atoi(base->args[0]);
     return CMD_OK;
 }
 

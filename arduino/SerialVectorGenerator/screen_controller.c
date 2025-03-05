@@ -8,20 +8,15 @@
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
 
- #define max(a,b)               \
-   ({ __typeof__ (a) _a = (a);  \
-       __typeof__ (b) _b = (b); \
-     _a > _b ? _a : _b; })      \
-
- #define min(a,b)               \
-   ({ __typeof__ (a) _a = (a);  \
-       __typeof__ (b) _b = (b); \
-     _a < _b ? _a : _b; })      \
-
 static inline bool calcPoint(long elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
     beam->x = motion->x;
     beam->y = motion->y;
-    if (elapsed / 1000 >= screen->hold_time) {
+#ifdef AVR
+    elapsed = elapsed >> 10; // Dividing by 1024 is close enough
+#else
+    elapsed /= 1000;
+#endif
+    if (elapsed >= screen->hold_time) {
         // Motion is complete
         beam->a = 0;
         return false;
@@ -32,7 +27,12 @@ static inline bool calcPoint(long elapsed, const PointMotion* motion, const Scre
 
 static inline bool calcLine(long elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
     // Dert: Distance = Rate * time
-    float moved = screen->speed * elapsed / 1000;
+    int moved;
+#ifdef AVR
+    moved = screen->speed * elapsed >> 10; // Dividing by 1024 is close enough
+#else
+    moved = screen->speed * elapsed / 1000;
+#endif
     if (moved > motion->length) {
         // Motion is complete
         beam->x = motion->x2;
@@ -42,8 +42,8 @@ static inline bool calcLine(long elapsed, const LineMotion* motion, const Screen
     }
 
     // Calculate movement in each dimention
-    beam->x = (long)((motion->x2 - motion->x1) * moved / motion->length) + motion->x1;
-    beam->y = (long)((motion->y2 - motion->y1) * moved / motion->length) + motion->y1;
+    beam->x = (motion->x2 - motion->x1) * moved / motion->length + motion->x1;
+    beam->y = (motion->y2 - motion->y1) * moved / motion->length + motion->y1;
     beam->a = 1;
     return true;
 }
