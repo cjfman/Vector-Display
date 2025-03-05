@@ -70,11 +70,11 @@ static inline String printPointMotion(const PointMotion* motion) {
 
 static inline String printLineMotion(const LineMotion* motion) {
     return String("LineMotion ")
-        + " x1: "     + motion->x1
-        + " y1: "     + motion->y1
-        + " x2: "     + motion->x2
-        + " y2: "     + motion->y2;
-        + " length: " + (long)motion->length;
+        + " x1: "     + motion->mx1 / 1000
+        + " y1: "     + motion->my1 / 1000
+        + " x2: "     + motion->mx2 / 1000
+        + " y2: "     + motion->my2 / 1000;
+        //+ " length: " + (long)motion->length;
 }
 
 String motionToString(const ScreenMotion* motion) {

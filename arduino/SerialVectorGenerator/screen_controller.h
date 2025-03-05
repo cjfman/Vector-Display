@@ -47,11 +47,18 @@ typedef struct PointMotion {
 
 typedef struct LineMotion {
     ScreenMotion base;
-    int x1;
-    int y1;
-    int x2;
-    int y2;
-    double length;
+#ifndef AVR
+    long x1;
+    long y1;
+    long x2;
+    long y2;
+#endif
+    long mx1;
+    long my1;
+    long mx2;
+    long my2;
+    long dx; // Points per microsecond
+    long dy; // Points per microsecond
 } LineMotion;
 
 typedef struct ScreenState {
@@ -60,7 +67,7 @@ typedef struct ScreenState {
     int x_offset;
     int y_offset;
     int hold_time; // Time to hold a point
-    int speed;     // Points moved in a microsecond
+    long speed;        // Millipoints moved in a microsecond
     long motion_start; // Time when current motion started
     BeamState beam;
     int motion_active;
@@ -72,7 +79,7 @@ typedef struct ScreenState {
 
 void screen_init(ScreenState* screen);
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd);
-LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd);
+LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, long speed);
 bool update_screen(long time, ScreenState* screen, RingMemPool* pool);
 bool sequence_start(ScreenState* screen);
 bool sequence_end(ScreenState* screen);

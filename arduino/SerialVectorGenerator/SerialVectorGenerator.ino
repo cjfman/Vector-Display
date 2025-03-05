@@ -39,13 +39,13 @@ void printErrorCode(int errcode) {
     newline();
     Serial.print("NAK: ");
     Serial.print(cmdErrToText(errcode));
-    Serial.write('\n');
+    Serial.print("\n");
 }
 
 void printError(char* msg) {
     Serial.print("NAK: ");
     Serial.print(msg);
-    Serial.write('\n');
+    Serial.print("\n");
 }
 
 String intToString(int i) {
@@ -110,8 +110,8 @@ void update_dac(const ScreenState* screen) {
         String msg = String("Updating screen:")
         + " x = " + screen->beam.x + " -> 0x" + String(x, HEX)
         + " y = " + screen->beam.y + " -> 0x" + String(y, HEX);
-        Serial.write(msg.c_str());
-        Serial.write("\n");
+        Serial.print(msg);
+        Serial.print("\n");
     }
     dac_write2(x, y);
 }
@@ -221,7 +221,7 @@ void checkForCommand(void) {
         motion = (ScreenMotion*)screen_push_point(&motion_pool, (PointCmd*)&cmd);
         break;
     case Cmd_Line:
-        motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd);
+        motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd, main_screen.speed);
         break;
     case Cmd_Scale:
         main_screen.x_width  = cmd.scale.x_width;
@@ -236,7 +236,7 @@ void checkForCommand(void) {
             success = true;
         }
         if (cmd.speed.speed > 0) {
-            main_screen.speed = cmd.speed.speed;
+            main_screen.speed = cmd.speed.speed * 1000;
             success = true;
         }
         break;
@@ -304,17 +304,17 @@ void loop() {
         const ScreenMotion* next_motion = ring_peek(&motion_pool);
         String msg;
         msg = String("Screen update time ") + (after - now) + "us\n";
-        Serial.write(msg.c_str());
+        Serial.print(msg);
         if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
             msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
-            Serial.write(msg.c_str());
-            Serial.write("\n");
+            Serial.print(msg);
+            Serial.print("\n");
             memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
         }
         if (last_motion != next_motion && next_motion && PROMPT) {
             msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
-            Serial.write(msg.c_str());
-            Serial.write("\n");
+            Serial.print(msg);
+            Serial.print("\n");
             last_motion = next_motion;
         }
 

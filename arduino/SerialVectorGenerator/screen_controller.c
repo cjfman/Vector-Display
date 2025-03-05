@@ -25,27 +25,33 @@ static inline bool calcPoint(long elapsed, const PointMotion* motion, const Scre
     return true;
 }
 
+static inline bool line_completed(long end, long pos, bool speed) {
+    return ((speed && pos > end) || (!speed && (pos < end)));
+}
+
 static inline bool calcLine(long elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
     // Dert: Distance = Rate * time
-    int moved;
-#ifdef AVR
-    moved = screen->speed * elapsed >> 10; // Dividing by 1024 is close enough
-#else
-    moved = screen->speed * elapsed / 1000;
-#endif
-    if (moved > motion->length) {
-        // Motion is complete
-        beam->x = motion->x2;
-        beam->y = motion->y2;
-        beam->a = 0;
-        return false;
-    }
 
     // Calculate movement in each dimention
-    beam->x = (motion->x2 - motion->x1) * moved / motion->length + motion->x1;
-    beam->y = (motion->y2 - motion->y1) * moved / motion->length + motion->y1;
+    long next_x = motion->mx1 + motion->dx * elapsed;
+    long next_y = motion->my1 + motion->dy * elapsed;
     beam->a = 1;
-    return true;
+    if (line_completed(motion->mx2, next_x, (motion->dx > 0))
+        || line_completed(motion->my2, next_y, (motion->dy > 0))
+    ) {
+        // Motion is complete
+        next_x = motion->mx2;
+        next_y = motion->my2;
+        beam->a = 0;
+    }
+#ifdef AVR
+    beam->x = next_x >> 10;
+    beam->y = next_y >> 10;
+#else
+    beam->x = next_x / 1000;
+    beam->y = next_y / 1000;
+#endif
+    return (beam->a > 0);
 }
 
 static inline bool nextBeamState(long elapsed, const ScreenMotion* motion, ScreenState* screen) {
@@ -77,7 +83,7 @@ void screen_init(ScreenState* screen) {
     memset(screen, '\0', sizeof(ScreenState));
     screen->x_width   = 100;
     screen->y_width   = 100;
-    screen->speed     = 2;  // points / millisecond
+    screen->speed     = 1;  // millipoint / microsecond
     screen->hold_time = 1;  // 1 ms
     screen->sequence_enabled = false;
     screen->sequence_idx = -1;
@@ -97,21 +103,31 @@ PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
     return motion;
 }
 
-LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd) {
+LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, long speed) {
     // Allocate object from the pool
     LineMotion* motion = ring_get(pool, sizeof(LineMotion));
     if (!motion) {
         return NULL;
     }
+    // Calculate length in millipoints
+    long length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2)) * 1000;
+
     // Populate motion
     motion->base.type = SM_Line;
+#ifndef AVR
     motion->x1 = cmd->x1;
     motion->y1 = cmd->y1;
     motion->x2 = cmd->x2;
     motion->y2 = cmd->y2;
+#endif
+    // Multiply by 1000 to get millipoints
+    motion->mx1 = 1000*cmd->x1;
+    motion->my1 = 1000*cmd->y1;
+    motion->mx2 = 1000*cmd->x2;
+    motion->my2 = 1000*cmd->y2;
+    motion->dx = (motion->mx2 - motion->mx1) * speed / length;
+    motion->dy = (motion->my2 - motion->my1) * speed / length;
 
-    // Calculate length
-    motion->length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2));
     return motion;
 }
 

@@ -83,7 +83,7 @@ typedef struct LineCmd {
 typedef struct SpeedCmd {
     Command base;
     int hold_time;
-    int speed;
+    float speed;
 } SpeedCmd;
 
 typedef struct SequenceCmd {
