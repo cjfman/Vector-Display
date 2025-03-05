@@ -7,6 +7,22 @@
 
 #define SEQ_LEN 16
 
+#ifndef max
+#define max(a,b)                \
+   ({ __typeof__ (a) _a = (a);  \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })      \
+
+#endif // max
+
+#ifndef min
+#define min(a,b)                \
+   ({ __typeof__ (a) _a = (a);  \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })      \
+
+#endif // mix
+
 typedef struct BeamState {
     int x;
     int y;
