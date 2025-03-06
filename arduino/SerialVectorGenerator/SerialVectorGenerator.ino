@@ -35,7 +35,7 @@ void printPrompt() {
     Serial.print("> ");
 }
 
-void printErrorCode(int errcode) {
+void printErrorCode(err_t errcode) {
     newline();
     Serial.print("NAK: ");
     Serial.print(cmdErrToText(errcode));
@@ -168,7 +168,7 @@ void checkForCommand(void) {
     }
 
     // Build command
-    int errcode = buildCmd(cmd_buf, read_len);
+    err_t errcode = buildCmd(cmd_buf, read_len);
     if (errcode) {
         printErrorCode(errcode);
         printPrompt();
@@ -291,13 +291,13 @@ void checkForCommand(void) {
 void loop() {
     // Check for command, then update the screen
 
-    long now = micros();
+    uint32_t now = micros();
     bool active = update_screen(now, &main_screen, &motion_pool);
 
     // Handle debug
-    static long debug_start = -1;
+    static int32_t debug_start = -1;
     if (DEBUG) {
-        long after = micros();
+        uint32_t after = micros();
         if (debug_start < 0) debug_start = now;
         static BeamState beam_state;
         static const ScreenMotion* last_motion = nullptr;
