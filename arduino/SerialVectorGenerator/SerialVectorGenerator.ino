@@ -1,7 +1,7 @@
 #include <SPI.h>
 
-#define PROMPT false
-#define DEBUG false
+bool PROMPT = true;
+bool DEBUG  = false;
 
 extern "C" {
 #include "command_parser.h"
@@ -35,17 +35,17 @@ void printPrompt() {
     Serial.print("> ");
 }
 
-void printErrorCode(int errcode) {
+void printErrorCode(err_t errcode) {
     newline();
     Serial.print("NAK: ");
     Serial.print(cmdErrToText(errcode));
-    Serial.write('\n');
+    Serial.print("\n");
 }
 
 void printError(char* msg) {
     Serial.print("NAK: ");
     Serial.print(msg);
-    Serial.write('\n');
+    Serial.print("\n");
 }
 
 String intToString(int i) {
@@ -65,7 +65,7 @@ static inline void dac_reset(void) {
     digitalWrite(DAC_CLR, HIGH);
 }
 
-void dac_write(uint16_t val) {
+static inline void dac_write(uint16_t val) {
     // Write data
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
@@ -79,13 +79,13 @@ void dac_write(uint16_t val) {
     digitalWrite(DAC_LDAC, HIGH);
 }
 
-void dac_write2(uint16_t x, uint16_t y) {
+static inline void dac_write2(uint16_t x, uint16_t y) {
     // Write data
     // X
     SPI.beginTransaction(SPISettings(DAC_CLK_SPEED, MSBFIRST, SPI_MODE1));
     digitalWrite(DAC_SYNC, LOW);
-    SPI.transfer16(x);
     SPI.transfer16(y);
+    SPI.transfer16(x);
     digitalWrite(DAC_SYNC, HIGH);
     SPI.endTransaction();
 
@@ -110,8 +110,8 @@ void update_dac(const ScreenState* screen) {
         String msg = String("Updating screen:")
         + " x = " + screen->beam.x + " -> 0x" + String(x, HEX)
         + " y = " + screen->beam.y + " -> 0x" + String(y, HEX);
-        Serial.write(msg.c_str());
-        Serial.write("\n");
+        Serial.print(msg);
+        Serial.print("\n");
     }
     dac_write2(x, y);
 }
@@ -137,6 +137,10 @@ void setup() {
     // Initialize memory
     screen_init(&main_screen);
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
+    main_screen.x_width  = 200;
+    main_screen.y_width  = 200;
+    main_screen.x_offset = 100;
+    main_screen.y_offset = 100;
 
     // Print prompt
     if (PROMPT) printPrompt();
@@ -157,12 +161,14 @@ void checkForCommand(void) {
             newline();
             printPrompt();
         }
+        else {
+            Serial.print("NAK\n");
+        }
         return;
     }
-    String num = intToString(read_len);
 
     // Build command
-    int errcode = buildCmd(cmd_buf, read_len);
+    err_t errcode = buildCmd(cmd_buf, read_len);
     if (errcode) {
         printErrorCode(errcode);
         printPrompt();
@@ -177,7 +183,6 @@ void checkForCommand(void) {
     // Check for noop command
     if (noopCommand()) {
         if (PROMPT) {
-            Serial.print("\nNoop\n");
             printPrompt();
         }
         return;
@@ -212,7 +217,7 @@ void checkForCommand(void) {
         motion = (ScreenMotion*)screen_push_point(&motion_pool, (PointCmd*)&cmd);
         break;
     case Cmd_Line:
-        motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd);
+        motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd, main_screen.speed);
         break;
     case Cmd_Scale:
         main_screen.x_width  = cmd.scale.x_width;
@@ -222,39 +227,119 @@ void checkForCommand(void) {
         success = true;
         break;
     case Cmd_Speed:
-        main_screen.hold_time = cmd.speed.hold_time;
-        main_screen.speed     = cmd.speed.speed;
-        success = true;
+        if (cmd.speed.hold_time > 0) {
+            main_screen.hold_time = cmd.speed.hold_time;
+            success = true;
+        }
+        if (cmd.speed.speed > 0) {
+            main_screen.speed = cmd.speed.speed * 1000;
+            success = true;
+        }
+        break;
+    case Cmd_Sequence:
+        if (cmd.sequence.start) {
+            success = sequence_start(&main_screen);
+            if (success) ring_reset(&motion_pool);
+        }
+        else if (cmd.sequence.end) {
+            success = sequence_end(&main_screen);
+        }
+        else if (cmd.sequence.clear) {
+            success = sequence_clear(&main_screen);
+            if (success) ring_reset(&motion_pool);
+        }
+        break;
+    case Cmd_Set:
+    case Cmd_Unset:
+        if (strcmp(cmd.set.name, "debug") == 0) {
+            DEBUG = cmd.set.set;
+            success = true;
+        }
+        else if (strcmp(cmd.set.name, "prompt") == 0) {
+            PROMPT = cmd.set.set;
+            success = true;
+        }
         break;
     case Cmd_Noop:
+        success = true;
         break;
+    default:
+        break;
+    }
+
+    if (motion != NULL && main_screen.sequence_enabled) {
+        success = add_to_sequence(&main_screen, motion);
     }
 
     if (PROMPT) {
         Serial.print(commandToString((Command*)&cmd) + "\n");
-        Serial.print((success) ? "OK" :
-                     (motion)  ? (String("New Motion: 0x") + String((size_t)(motion), HEX) + " " + motionToString(motion)).c_str() :
-                                 "FAILED");
-        Serial.print("\n");
+        if (motion != NULL) {
+            Serial.print("New Motion: 0x");
+            Serial.print(String((size_t)(motion), HEX) + " ");
+            serialPrintMotion(motion);
+            Serial.print("\n");
+        }
+        else {
+            Serial.print((success) ? "OK\n" : "FAILED\n");
+        }
         printPrompt();
+    }
+    else {
+        Serial.print((success || motion) ? "ACK\n" : "NAK\n");
     }
 }
 
 void loop() {
-    //*
     // Check for command, then update the screen
 
-    long now = micros();
+    uint32_t now = micros();
     bool active = update_screen(now, &main_screen, &motion_pool);
 
     // Handle debug
-    static const ScreenMotion* last_motion = nullptr;
-    const ScreenMotion* next_motion = ring_peek(&motion_pool);
-    if (DEBUG && last_motion != next_motion && next_motion && PROMPT) {
-        String full_msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
-        Serial.write(full_msg.c_str());
-        Serial.write("\n");
-        last_motion = next_motion;
+    static int32_t debug_start = -1;
+    if (DEBUG) {
+        bool printed = false;
+        uint32_t after = micros();
+        if (debug_start < 0) debug_start = now;
+        static BeamState beam_state;
+        static const ScreenMotion* last_motion = nullptr;
+        const ScreenMotion* next_motion = ring_peek(&motion_pool);
+        String msg;
+        if (active) {
+            msg = String("Screen update time ") + (after - now) + "us\n";
+            Serial.print(msg);
+            printed = true;
+        }
+        if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
+            msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
+            Serial.print(msg);
+            Serial.print("\n");
+            memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
+            printed = true;
+        }
+        /*
+        if (last_motion != next_motion && next_motion && PROMPT) {
+            Serial.print(String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": ");
+            serialPrintMotion(next_motion);
+            Serial.print("\n");
+            last_motion = next_motion;
+            printed = true;
+        }
+        */
+
+        // Stop debug after 10 seconds
+        if (now - debug_start > 10000000l) {
+            debug_start = -1;
+            DEBUG = false;
+        }
+        if (printed) {
+            if (PROMPT) {
+                printPrompt();
+            }
+            else {
+                Serial.print("\n");
+            }
+        }
     }
 
     // Update the screen
@@ -264,13 +349,4 @@ void loop() {
     if (!active || !DEBUG) {
         checkForCommand();
     }
-    /*/
-    // Make a 1kHz sawtooth wave
-    long now = millis() % 1000;
-    uint16_t val1 = (now * 0xFFFF / 1000) & 0xFFFF;
-    uint16_t val2 = ((now-250) * 0xFFFF / 1000) & 0xFFFF;
-    //Serial.write((String("val: ") + val + "\n").c_str());
-    dac_write2(val1, val2);
-    delay(1);
-    //*/
 }

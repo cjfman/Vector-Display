@@ -132,6 +132,6 @@ test: $(TARGET)
 clean :
 	rm -f $(TARGET) $(LOCAL_OBJS)
 
-clean-all : clean 
+clean-all : clean
 	rm -f gtest.a gtest_main.a *.o
 
