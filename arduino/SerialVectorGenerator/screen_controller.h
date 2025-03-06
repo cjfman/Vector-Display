@@ -1,6 +1,7 @@
 #ifndef SCREEN_CONTROLLER_HH
 #define SCREEN_CONTROLLER_HH
 
+#include <inttypes.h>
 #include <stdbool.h>
 
 #include "command_parser.h"
@@ -24,8 +25,8 @@
 #endif // mix
 
 typedef struct BeamState {
-    int x;
-    int y;
+    int16_t x;
+    int16_t y;
     int a; // Active
 } BeamState;
 
@@ -41,39 +42,39 @@ typedef struct ScreenMotion {
 
 typedef struct PointMotion {
     ScreenMotion base;
-    int x;
-    int y;
+    int16_t x;
+    int16_t y;
 } PointMotion;
 
 typedef struct LineMotion {
     ScreenMotion base;
 #ifndef AVR
-    long x1;
-    long y1;
-    long x2;
-    long y2;
+    int16_t x1;
+    int16_t y1;
+    int16_t x2;
+    int16_t y2;
 #endif
-    long mx1;
-    long my1;
-    long mx2;
-    long my2;
-    long dx; // Points per microsecond
-    long dy; // Points per microsecond
+    int32_t mx1;
+    int32_t my1;
+    int32_t mx2;
+    int32_t my2;
+    int32_t dx; // Points per microsecond
+    int32_t dy; // Points per microsecond
 } LineMotion;
 
 typedef struct ScreenState {
-    int x_width;
-    int y_width;
-    int x_offset;
-    int y_offset;
+    int16_t x_width;
+    int16_t y_width;
+    int16_t x_offset;
+    int16_t y_offset;
     int hold_time; // Time to hold a point
     long speed;        // Millipoints moved in a microsecond
-    long motion_start; // Time when current motion started
+    uint32_t motion_start; // Time when current motion started
     BeamState beam;
-    int motion_active;
+    bool motion_active;
     bool sequence_enabled;
-    int sequence_size;
-    int sequence_idx;
+    int8_t sequence_size;
+    int8_t sequence_idx;
     ScreenMotion* sequence[SEQ_LEN];
 } ScreenState;
 
