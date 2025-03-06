@@ -183,11 +183,7 @@ void checkForCommand(void) {
     // Check for noop command
     if (noopCommand()) {
         if (PROMPT) {
-            Serial.print("\nNoop\n");
             printPrompt();
-        }
-        else {
-            Serial.print("ACK\n");
         }
         return;
     }
@@ -277,10 +273,15 @@ void checkForCommand(void) {
 
     if (PROMPT) {
         Serial.print(commandToString((Command*)&cmd) + "\n");
-        Serial.print((success) ? "OK" :
-                     (motion)  ? (String("New Motion: 0x") + String((size_t)(motion), HEX) + " " + motionToString(motion)).c_str() :
-                                 "FAILED");
-        Serial.print("\n");
+        if (motion != NULL) {
+            Serial.print("New Motion: 0x");
+            Serial.print(String((size_t)(motion), HEX) + " ");
+            serialPrintMotion(motion);
+            Serial.print("\n");
+        }
+        else {
+            Serial.print((success) ? "OK\n" : "FAILED\n");
+        }
         printPrompt();
     }
     else {
@@ -297,32 +298,47 @@ void loop() {
     // Handle debug
     static int32_t debug_start = -1;
     if (DEBUG) {
+        bool printed = false;
         uint32_t after = micros();
         if (debug_start < 0) debug_start = now;
         static BeamState beam_state;
         static const ScreenMotion* last_motion = nullptr;
         const ScreenMotion* next_motion = ring_peek(&motion_pool);
         String msg;
-        msg = String("Screen update time ") + (after - now) + "us\n";
-        Serial.print(msg);
+        if (active) {
+            msg = String("Screen update time ") + (after - now) + "us\n";
+            Serial.print(msg);
+            printed = true;
+        }
         if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
             msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
             Serial.print(msg);
             Serial.print("\n");
             memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
+            printed = true;
         }
+        /*
         if (last_motion != next_motion && next_motion && PROMPT) {
-            msg = String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": " + motionToString(next_motion) + "\n";
-            Serial.print(msg);
+            Serial.print(String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": ");
+            serialPrintMotion(next_motion);
             Serial.print("\n");
             last_motion = next_motion;
+            printed = true;
         }
+        */
 
         // Stop debug after 10 seconds
         if (now - debug_start > 10000000l) {
             debug_start = -1;
             DEBUG = false;
-            printPrompt();
+        }
+        if (printed) {
+            if (PROMPT) {
+                printPrompt();
+            }
+            else {
+                Serial.print("\n");
+            }
         }
     }
 

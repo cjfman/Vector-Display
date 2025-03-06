@@ -110,7 +110,7 @@ LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t spe
         return NULL;
     }
     // Calculate length in millipoints
-    uint32_t length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2)) * 1000;
+    uint32_t length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2)) * 1000l;
 
     // Populate motion
     motion->base.type = SM_Line;
@@ -121,10 +121,10 @@ LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t spe
     motion->y2 = cmd->y2;
 #endif
     // Multiply by 1000 to get millipoints
-    motion->mx1 = 1000*cmd->x1;
-    motion->my1 = 1000*cmd->y1;
-    motion->mx2 = 1000*cmd->x2;
-    motion->my2 = 1000*cmd->y2;
+    motion->mx1 = 1000l*cmd->x1;
+    motion->my1 = 1000l*cmd->y1;
+    motion->mx2 = 1000l*cmd->x2;
+    motion->my2 = 1000l*cmd->y2;
     motion->dx = (motion->mx2 - motion->mx1) * speed / length;
     motion->dy = (motion->my2 - motion->my1) * speed / length;
 

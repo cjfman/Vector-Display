@@ -64,27 +64,32 @@ String commandToString(const Command* cmd) {
     }
 }
 
-static inline String printPointMotion(const PointMotion* motion) {
-    return String("PointMotion x: ") + motion->x + " y: " + motion->y;
+static inline void printPointMotion(const PointMotion* motion) {
+    Serial.print(String("PointMotion x: ") + motion->x + " y: " + motion->y);
 }
 
 static inline String printLineMotion(const LineMotion* motion) {
-    return String("LineMotion ")
-        + " x1: "     + motion->mx1 / 1000
-        + " y1: "     + motion->my1 / 1000
-        + " x2: "     + motion->mx2 / 1000
-        + " y2: "     + motion->my2 / 1000;
-        //+ " length: " + (long)motion->length;
+    Serial.print("LineMotion ");
+    Serial.print(String(" x1: ") + motion->mx1 / 1000);
+    Serial.print(String(" y1: ") + motion->my1 / 1000);
+    Serial.print(String(" x2: ") + motion->mx2 / 1000);
+    Serial.print(String(" y2: ") + motion->my2 / 1000);
+    Serial.print(String(" dx: ") + motion->dx);
+    Serial.print(String(" dy: ") + motion->dy);
 }
 
-String motionToString(const ScreenMotion* motion) {
+void serialPrintMotion(const ScreenMotion* motion) {
     switch (motion->type) {
     case SM_Point:
-        return printPointMotion((const PointMotion*) motion);
+        printPointMotion((const PointMotion*) motion);
+        break;
     case SM_Line:
-        return printLineMotion((const LineMotion*) motion);
+        printLineMotion((const LineMotion*) motion);
+        break;
+    default:
+        Serial.print(String("Unknown screen motion type ") + motion->type);
+        break;
     }
-    return String("Unknown screen motion type ") + motion->type;
 }
 
 String beamStateToString(const BeamState* state) {
