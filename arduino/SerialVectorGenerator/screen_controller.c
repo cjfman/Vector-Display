@@ -8,7 +8,7 @@
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
 
-static inline bool calcPoint(long elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
+static inline bool calcPoint(uint16_t elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
     beam->x = motion->x;
     beam->y = motion->y;
 #ifdef AVR
@@ -25,16 +25,16 @@ static inline bool calcPoint(long elapsed, const PointMotion* motion, const Scre
     return true;
 }
 
-static inline bool line_completed(long end, long pos, bool speed) {
+static inline bool line_completed(int32_t end, int32_t pos, bool speed) {
     return ((speed && pos > end) || (!speed && (pos < end)));
 }
 
-static inline bool calcLine(long elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+static inline bool calcLine(uint16_t elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
     // Dert: Distance = Rate * time
 
     // Calculate movement in each dimention
-    long next_x = motion->mx1 + motion->dx * elapsed;
-    long next_y = motion->my1 + motion->dy * elapsed;
+    int32_t next_x = motion->mx1 + motion->dx * elapsed;
+    int32_t next_y = motion->my1 + motion->dy * elapsed;
     beam->a = 1;
     if (line_completed(motion->mx2, next_x, (motion->dx > 0))
         || line_completed(motion->my2, next_y, (motion->dy > 0))
@@ -54,9 +54,9 @@ static inline bool calcLine(long elapsed, const LineMotion* motion, const Screen
     return (beam->a > 0);
 }
 
-static inline bool nextBeamState(long elapsed, const ScreenMotion* motion, ScreenState* screen) {
+static inline bool nextBeamState(uint16_t elapsed, const ScreenMotion* motion, ScreenState* screen) {
     BeamState beam;
-    int active;
+    bool active;
     switch (motion->type) {
     case SM_Point:
         active = calcPoint(elapsed, (PointMotion*)motion, screen, &beam);
@@ -65,7 +65,7 @@ static inline bool nextBeamState(long elapsed, const ScreenMotion* motion, Scree
         active = calcLine(elapsed, (LineMotion*)motion, screen, &beam);
         break;
     default:
-        active = 0;
+        active = false;
         beam.x = 0;
         beam.y = 0;
         beam.a = 0;
@@ -103,14 +103,14 @@ PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
     return motion;
 }
 
-LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, long speed) {
+LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t speed) {
     // Allocate object from the pool
     LineMotion* motion = ring_get(pool, sizeof(LineMotion));
     if (!motion) {
         return NULL;
     }
     // Calculate length in millipoints
-    long length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2)) * 1000;
+    uint32_t length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2)) * 1000;
 
     // Populate motion
     motion->base.type = SM_Line;
@@ -131,8 +131,8 @@ LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, long speed) 
     return motion;
 }
 
-bool update_screen(long time, ScreenState* screen, RingMemPool* pool) {
-    long elapsed = time - screen->motion_start;
+bool update_screen(uint32_t time, ScreenState* screen, RingMemPool* pool) {
+    int16_t elapsed = time - screen->motion_start;
 
     // Get the current motion
     ScreenMotion* motion = (!screen->sequence_enabled) ? ring_peek(pool)                        :
@@ -213,4 +213,3 @@ bool add_to_sequence(ScreenState* screen, const ScreenMotion* motion) {
     screen->sequence[screen->sequence_size++] = motion;
     return true;
 }
-

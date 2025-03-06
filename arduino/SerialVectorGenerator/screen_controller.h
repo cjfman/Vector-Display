@@ -67,8 +67,8 @@ typedef struct ScreenState {
     int16_t y_width;
     int16_t x_offset;
     int16_t y_offset;
-    int hold_time; // Time to hold a point
-    long speed;        // Millipoints moved in a microsecond
+    uint16_t hold_time;    // Time to hold a point
+    uint16_t speed;        // Millipoints moved in a microsecond
     uint32_t motion_start; // Time when current motion started
     BeamState beam;
     bool motion_active;
@@ -80,8 +80,8 @@ typedef struct ScreenState {
 
 void screen_init(ScreenState* screen);
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd);
-LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, long speed);
-bool update_screen(long time, ScreenState* screen, RingMemPool* pool);
+LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t speed);
+bool update_screen(uint32_t time, ScreenState* screen, RingMemPool* pool);
 bool sequence_start(ScreenState* screen);
 bool sequence_end(ScreenState* screen);
 bool sequence_clear(ScreenState* screen);
