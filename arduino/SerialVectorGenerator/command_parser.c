@@ -21,15 +21,15 @@ const char* cmd_set[Cmd_NUM] = {
 };
 
 // Ring buffer
-static char cmd_buf[CMD_BUF_SIZE];
-static int cmd_buf_len = 0;
+static char cmd_buf[CMD_BUF_SIZE + 1];
+static uint8_t cmd_buf_len = 0;
 
 void clearCache(void) {
     cmd_buf_len = 0;
 }
 
 // And a command to the buffer
-int buildCmd(const char* new_cmd, int len) {
+err_t buildCmd(const char* new_cmd, uint8_t len) {
     // Check size
     if (len + cmd_buf_len > CMD_BUF_SIZE - 1) {
         // Buffer overrun
@@ -39,7 +39,7 @@ int buildCmd(const char* new_cmd, int len) {
     }
 //    memcpy(&cmd_buf[cmd_buf_len], new_cmd, len);
 //    cmd_buf_len += len;
-    for (int i = 0; i < len; i++) {
+    for (uint8_t i = 0; i < len; i++) {
         char c = new_cmd[i];
         if (isprint(c) || c == '\r' || c == '\n') {
             cmd_buf[cmd_buf_len++] = c;
@@ -52,7 +52,7 @@ int buildCmd(const char* new_cmd, int len) {
     return CMD_OK;
 }
 
-int lookForChar(char c) {
+static int16_t lookForChar(char c) {
     int i;
     for (i = 0; i < cmd_buf_len; i++) {
         if (cmd_buf[i] == c) return i;
@@ -61,11 +61,11 @@ int lookForChar(char c) {
 }
 
 // Shift the buffer pointer
-void shiftBuf(int len) {
+static void shiftBuf(uint8_t len) {
     // Don't do anything if the shift amount is too much
     if (len > cmd_buf_len) return;
 
-    int i;
+    uint8_t i;
     for (i = 0; i < len; i++) {
         cmd_buf[i] = cmd_buf[i + len];
     }
@@ -74,11 +74,11 @@ void shiftBuf(int len) {
 }
 
 // Trim line ends
-int trimCrlf(void) {
+static uint8_t trimCrlf(void) {
     if (cmd_buf_len == 0) return 0;
 
     char c;
-    int shift_len = 0;
+    uint8_t shift_len = 0;
     // Check first byte
     if (cmd_buf_len >= 1) {
          c = cmd_buf[0];
@@ -96,11 +96,11 @@ int trimCrlf(void) {
 }
 
 // Find the end of the next command
-int crlfPos(void) {
+static int16_t crlfPos(void) {
     if (!cmd_buf_len) return 0;
 
-    int cr_pos = lookForChar('\r');
-    int lf_pos = lookForChar('\n');
+    int16_t cr_pos = lookForChar('\r');
+    int16_t lf_pos = lookForChar('\n');
 
     // Must be at least one of them for a complete command
     if (cr_pos == -1 && lf_pos == -1) return -1;
@@ -116,28 +116,28 @@ int crlfPos(void) {
 }
 
 // The size of the command
-int commandSize(void) {
-    int pos = crlfPos();
+uint8_t commandSize(void) {
+    int16_t pos = crlfPos();
     return (pos != -1) ? pos : 0;
 }
 
-int noopCommand(void) {
+uint8_t noopCommand(void) {
     if (crlfPos() == -1) return 0;
 
     return trimCrlf();
 }
 
-int commandComplete(void) {
+bool commandComplete(void) {
     return (cmd_buf_len > 0 && crlfPos() != -1);
 }
 
-int cmdBufLen(void) {
+uint8_t cmdBufLen(void) {
     return cmd_buf_len;
 }
 
 // Get a command string from the command cache
 // and copy it into the buffer
-int getCmd(char* buf, int buf_len) {
+err_t getCmd(char* buf, uint8_t buf_len) {
     // Check for a complete command
     if (crlfPos() == -1) return 0;
 
@@ -163,10 +163,10 @@ int getCmd(char* buf, int buf_len) {
 }
 
 // Command decoder functer type
-typedef int (*DecodeFn)(Command *);
+typedef err_t (*DecodeFn)(Command *);
 
 // Decode a scale command
-int cmdDecodeScale(ScaleCmd* cmd) {
+static err_t cmdDecodeScale(ScaleCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->x_width  = atoi(base->args[0]);
@@ -177,7 +177,7 @@ int cmdDecodeScale(ScaleCmd* cmd) {
 }
 
 // Decode a point command
-int cmdDecodePoint(PointCmd* cmd) {
+static err_t cmdDecodePoint(PointCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 2) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->x = atoi(base->args[0]);
@@ -186,7 +186,7 @@ int cmdDecodePoint(PointCmd* cmd) {
 }
 
 // Decode a line command
-int cmdDecodeLine(LineCmd* cmd) {
+static err_t cmdDecodeLine(LineCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->x1 = atoi(base->args[0]);
@@ -197,7 +197,7 @@ int cmdDecodeLine(LineCmd* cmd) {
 }
 
 // Decode a speed command
-int cmdDecodeSpeed(SpeedCmd* cmd) {
+static err_t cmdDecodeSpeed(SpeedCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->speed = atof(base->args[0]);
@@ -205,7 +205,7 @@ int cmdDecodeSpeed(SpeedCmd* cmd) {
 }
 
 // Decode a hold command
-int cmdDecodeHold(SpeedCmd* cmd) {
+static err_t cmdDecodeHold(SpeedCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->hold_time = atoi(base->args[0]);
@@ -213,7 +213,7 @@ int cmdDecodeHold(SpeedCmd* cmd) {
 }
 
 // Decode a sequence command
-int cmdDecodeSequence(SequenceCmd* cmd) {
+static err_t cmdDecodeSequence(SequenceCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
     if (strcmp(base->args[0], "start") == 0) {
@@ -232,7 +232,7 @@ int cmdDecodeSequence(SequenceCmd* cmd) {
 }
 
 // Decode Set/Unset command
-int cmdDecodeSet(SetCmd* cmd) {
+static err_t cmdDecodeSet(SetCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 1) return CMD_ERR_WRONG_NUM_ARGS;
     cmd->name = base->args[0];
@@ -240,12 +240,12 @@ int cmdDecodeSet(SetCmd* cmd) {
 }
 
 // Parse a command line
-int cmdParse(CommandUnion* cmd, char* buf, int len) {
+err_t cmdParse(CommandUnion* cmd, char* buf, uint8_t len) {
     // Command arguments are space separated
     memset(cmd, '\0', sizeof(CommandUnion));
-    int count = 0;
+    uint8_t count = 0;
     char* cmd_start = buf;
-    int i;
+    uint8_t i;
     for (i = 0; i < len; i++) {
         if (buf[i] == ' ') {
             // Trim off leading spaces
@@ -270,7 +270,7 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
     cmd->base.numargs = count;
 
     // Get cmd type
-    int (*decode_fn)(Command* cmd) = NULL;
+    err_t (*decode_fn)(Command* cmd) = NULL;
     if (strcmp(cmd_set[Cmd_Scale], cmd_start) == 0) {
         cmd->base.type = Cmd_Scale;
         decode_fn = (DecodeFn)cmdDecodeScale;
@@ -322,7 +322,7 @@ int cmdParse(CommandUnion* cmd, char* buf, int len) {
     return CMD_OK;
 }
 
-const char* cmdErrToText(int errcode) {
+const char* cmdErrToText(err_t errcode) {
     switch (errcode) {
     case CMD_OK:
         return "No error";
