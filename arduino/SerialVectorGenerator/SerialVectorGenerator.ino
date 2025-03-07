@@ -138,8 +138,8 @@ void setup() {
     // Initialize memory
     screen_init(&main_screen);
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
-    main_screen.x_size_pow = 10;
-    main_screen.y_size_pow = 10;
+    main_screen.x_size_pow = 11;
+    main_screen.y_size_pow = 11;
     main_screen.x_centered = true;
     main_screen.y_centered = true;
 
