@@ -6,8 +6,8 @@
 static inline String printScaleCmd(const ScaleCmd* cmd) {
     return String("scale x_width: ") + cmd->x_width
         + " y_width: "  + cmd->y_width
-        + " x_offset: " + cmd->x_offset
-        + " y_offset: " + cmd->y_offset;
+        + " x_centered: " + cmd->x_centered
+        + " y_centered: " + cmd->y_centered;
 }
 
 static inline String printPointCmd(const PointCmd* cmd) {

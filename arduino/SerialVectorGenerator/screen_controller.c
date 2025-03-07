@@ -7,6 +7,7 @@
 
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
+#include "utils.h"
 
 static inline bool calcPoint(uint16_t elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
     beam->x = motion->x;
@@ -72,8 +73,12 @@ static inline bool nextBeamState(uint16_t elapsed, const ScreenMotion* motion, S
     }
 
     // Bounds check
-    beam.x = max(min(beam.x, screen->x_width - screen->x_offset), -screen->x_offset);
-    beam.y = max(min(beam.y, screen->y_width - screen->y_offset), -screen->y_offset);
+    int16_t x_width = 1 << screen->x_size_pow;
+    int16_t y_width = 1 << screen->y_size_pow;
+    int16_t x_offset = (!screen->x_centered) ? 0 : x_width >> 1;
+    int16_t y_offset = (!screen->y_centered) ? 0 : y_width >> 1;
+    beam.x = max(min(beam.x, x_width - x_offset), -x_offset);
+    beam.y = max(min(beam.y, y_width - y_offset), -y_offset);
     screen->beam = beam;
 
     return active;
@@ -81,12 +86,12 @@ static inline bool nextBeamState(uint16_t elapsed, const ScreenMotion* motion, S
 
 void screen_init(ScreenState* screen) {
     memset(screen, '\0', sizeof(ScreenState));
-    screen->x_width   = 100;
-    screen->y_width   = 100;
-    screen->speed     = 10;  // millipoint / microsecond
-    screen->hold_time = 1;  // 1 ms
+    screen->x_size_pow       = DAC_BIT_WIDTH;
+    screen->y_size_pow       = DAC_BIT_WIDTH;
+    screen->speed            = 10;  // millipoint / microsecond
+    screen->hold_time        = 1;  // 1 ms
     screen->sequence_enabled = false;
-    screen->sequence_idx = -1;
+    screen->sequence_idx     = -1;
 }
 
 PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {

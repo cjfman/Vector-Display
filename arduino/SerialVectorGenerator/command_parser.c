@@ -169,10 +169,10 @@ typedef err_t (*DecodeFn)(Command *);
 static err_t cmdDecodeScale(ScaleCmd* cmd) {
     const Command* base = &cmd->base;
     if (base->numargs != 4) return CMD_ERR_WRONG_NUM_ARGS;
-    cmd->x_width  = atoi(base->args[0]);
-    cmd->y_width  = atoi(base->args[1]);
-    cmd->x_offset = atoi(base->args[2]);
-    cmd->y_offset = atoi(base->args[3]);
+    cmd->x_width    = atoi(base->args[0]);
+    cmd->y_width    = atoi(base->args[1]);
+    cmd->x_centered = !!atoi(base->args[2]);
+    cmd->y_centered = !!atoi(base->args[3]);
     return CMD_OK;
 }
 

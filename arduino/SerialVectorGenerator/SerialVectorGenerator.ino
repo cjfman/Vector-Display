@@ -1,3 +1,4 @@
+#include <math.h>
 #include <SPI.h>
 
 bool PROMPT = true;
@@ -7,6 +8,7 @@ extern "C" {
 #include "command_parser.h"
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
+#include "utils.h"
 }
 
 #define BAUD 115200
@@ -98,8 +100,8 @@ static inline void dac_write2(uint16_t x, uint16_t y) {
 void update_dac(const ScreenState* screen) {
     static uint16_t x = 0;
     static uint16_t y = 0;
-    uint16_t new_x = position_to_binary(screen->beam.x, screen->x_width - screen->x_offset, 16, true);
-    uint16_t new_y = position_to_binary(screen->beam.y, screen->y_width - screen->y_offset, 16, true);
+    uint16_t new_x = position_to_binary(screen->beam.x, screen->x_size_pow, DAC_BIT_WIDTH, true);
+    uint16_t new_y = position_to_binary(screen->beam.y, screen->y_size_pow, DAC_BIT_WIDTH, true);
     if (new_x == x && new_y == y) {
         // Nothing to do
         return;
@@ -107,10 +109,9 @@ void update_dac(const ScreenState* screen) {
     x = new_x;
     y = new_y;
     if (DEBUG) {
-        String msg = String("Updating screen:")
-        + " x = " + screen->beam.x + " -> 0x" + String(x, HEX)
-        + " y = " + screen->beam.y + " -> 0x" + String(y, HEX);
-        Serial.write(msg.c_str());
+        Serial.write("Updating screen:");
+        Serial.write((String(" x = ") + screen->beam.x + " -> 0x" + String(x, HEX)).c_str());
+        Serial.write((String(" y = ") + screen->beam.y + " -> 0y" + String(y, HEX)).c_str());
         Serial.write("\n");
     }
     dac_write2(x, y);
@@ -137,10 +138,10 @@ void setup() {
     // Initialize memory
     screen_init(&main_screen);
     ring_init(&motion_pool, motion_mem, sizeof(motion_mem));
-    main_screen.x_width  = 200;
-    main_screen.y_width  = 200;
-    main_screen.x_offset = 100;
-    main_screen.y_offset = 100;
+    main_screen.x_size_pow = 10;
+    main_screen.y_size_pow = 10;
+    main_screen.x_centered = true;
+    main_screen.y_centered = true;
 
     // Print prompt
     if (PROMPT) printPrompt();
@@ -220,10 +221,10 @@ void checkForCommand(void) {
         motion = (ScreenMotion*)screen_push_line(&motion_pool, (LineCmd*)&cmd, main_screen.speed);
         break;
     case Cmd_Scale:
-        main_screen.x_width  = cmd.scale.x_width;
-        main_screen.y_width  = cmd.scale.y_width;
-        main_screen.x_offset = cmd.scale.x_offset;
-        main_screen.y_offset = cmd.scale.y_offset;
+        main_screen.x_size_pow = log2ceil(cmd.scale.x_width);
+        main_screen.y_size_pow = log2ceil(cmd.scale.y_width);
+        main_screen.x_centered = cmd.scale.x_centered;
+        main_screen.y_centered = cmd.scale.y_centered;
         success = true;
         break;
     case Cmd_Speed:
