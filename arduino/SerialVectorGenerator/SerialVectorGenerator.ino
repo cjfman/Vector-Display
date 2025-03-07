@@ -17,35 +17,35 @@ extern "C" {
 //#define DAC_CLK_SPEED 5000000 // 5MHz / 200ns
 #define DAC_CLK_SPEED 1000000 // 1MHz
 
-char motion_mem[100];
+char motion_mem[256];
 RingMemPool motion_pool = {0};
 ScreenState main_screen = {0};
 
 void newline() {
-    Serial.print("\n");
+    Serial.write("\n");
 }
 
 void debugPrint(String msg) {
     newline();
-    Serial.print(msg);
+    Serial.write(msg.c_str());
     newline();
 }
 
 void printPrompt() {
-    Serial.print("> ");
+    Serial.write("> ");
 }
 
 void printErrorCode(err_t errcode) {
     newline();
-    Serial.print("NAK: ");
-    Serial.print(cmdErrToText(errcode));
-    Serial.print("\n");
+    Serial.write("NAK: ");
+    Serial.write(cmdErrToText(errcode));
+    Serial.write("\n");
 }
 
 void printError(char* msg) {
-    Serial.print("NAK: ");
-    Serial.print(msg);
-    Serial.print("\n");
+    Serial.write("NAK: ");
+    Serial.write(msg);
+    Serial.write("\n");
 }
 
 String intToString(int i) {
@@ -110,8 +110,8 @@ void update_dac(const ScreenState* screen) {
         String msg = String("Updating screen:")
         + " x = " + screen->beam.x + " -> 0x" + String(x, HEX)
         + " y = " + screen->beam.y + " -> 0x" + String(y, HEX);
-        Serial.print(msg);
-        Serial.print("\n");
+        Serial.write(msg.c_str());
+        Serial.write("\n");
     }
     dac_write2(x, y);
 }
@@ -132,7 +132,7 @@ void setup() {
     // Set up comms
     SPI.begin();
     Serial.begin(BAUD);
-    Serial.print("Vector Generator Command Terminal\n");
+    Serial.write("Vector Generator Command Terminal\n");
 
     // Initialize memory
     screen_init(&main_screen);
@@ -157,12 +157,12 @@ void checkForCommand(void) {
     int total = Serial.readBytes(cmd_buf, read_len);
     if (total != read_len) {
         if (PROMPT) {
-            Serial.print("NAK: Unknown error\n");
+            Serial.write("NAK: Unknown error\n");
             newline();
             printPrompt();
         }
         else {
-            Serial.print("NAK\n");
+            Serial.write("NAK\n");
         }
         return;
     }
@@ -272,20 +272,23 @@ void checkForCommand(void) {
     }
 
     if (PROMPT) {
-        Serial.print(commandToString((Command*)&cmd) + "\n");
+        Serial.write((commandToString((Command*)&cmd) + "\n").c_str());
         if (motion != NULL) {
-            Serial.print("New Motion: 0x");
-            Serial.print(String((size_t)(motion), HEX) + " ");
-            serialPrintMotion(motion);
-            Serial.print("\n");
+            Serial.write("New Motion: 0x");
+            Serial.write(String((size_t)(motion), HEX).c_str());
+            if (DEBUG) {
+                Serial.write(" ");
+                serialPrintMotion(motion);
+            }
+            Serial.write("\n");
         }
         else {
-            Serial.print((success) ? "OK\n" : "FAILED\n");
+            Serial.write((success) ? "OK\n" : "FAILED\n");
         }
         printPrompt();
     }
     else {
-        Serial.print((success || motion) ? "ACK\n" : "NAK\n");
+        Serial.write((success || motion) ? "ACK\n" : "NAK\n");
     }
 }
 
@@ -297,31 +300,27 @@ void loop() {
 
     // Handle debug
     static int32_t debug_start = -1;
+    static BeamState beam_state;
+    static const ScreenMotion* last_motion = nullptr;
     if (DEBUG) {
         bool printed = false;
         uint32_t after = micros();
         if (debug_start < 0) debug_start = now;
-        static BeamState beam_state;
-        static const ScreenMotion* last_motion = nullptr;
         const ScreenMotion* next_motion = ring_peek(&motion_pool);
-        String msg;
-        if (active) {
-            msg = String("Screen update time ") + (after - now) + "us\n";
-            Serial.print(msg);
-            printed = true;
-        }
         if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
-            msg = String("Time: ") + (now / 1000.0) + "ms | " + beamStateToString(&main_screen.beam) + "\n";
-            Serial.print(msg);
-            Serial.print("\n");
+            Serial.write("\n");
+            Serial.write((String("Screen update time ") + (after - now) + "us\n").c_str());
+            //Serial.write((String("Time: ") + (now / 1000.0) + "ms | ").c_str());
+            Serial.write(beamStateToString(&main_screen.beam).c_str());
+            Serial.write("\n");
             memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
             printed = true;
         }
         /*
         if (last_motion != next_motion && next_motion && PROMPT) {
-            Serial.print(String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": ");
+            Serial.write((String("\nNext motion 0x") + String((size_t)next_motion, HEX) + ": ").c_str());
             serialPrintMotion(next_motion);
-            Serial.print("\n");
+            Serial.write("\n");
             last_motion = next_motion;
             printed = true;
         }
@@ -337,7 +336,7 @@ void loop() {
                 printPrompt();
             }
             else {
-                Serial.print("\n");
+                Serial.write("\n");
             }
         }
     }

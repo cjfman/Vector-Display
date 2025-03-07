@@ -25,8 +25,8 @@ static inline bool calcPoint(uint16_t elapsed, const PointMotion* motion, const 
     return true;
 }
 
-static inline bool line_completed(int32_t end, int32_t pos, bool speed) {
-    return ((speed && pos > end) || (!speed && (pos < end)));
+static inline bool line_completed(int32_t end, int32_t pos, bool direction) {
+    return ((direction && pos > end) || (!direction && (pos < end)));
 }
 
 static inline bool calcLine(uint16_t elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
@@ -83,7 +83,7 @@ void screen_init(ScreenState* screen) {
     memset(screen, '\0', sizeof(ScreenState));
     screen->x_width   = 100;
     screen->y_width   = 100;
-    screen->speed     = 1;  // millipoint / microsecond
+    screen->speed     = 10;  // millipoint / microsecond
     screen->hold_time = 1;  // 1 ms
     screen->sequence_enabled = false;
     screen->sequence_idx = -1;
@@ -105,12 +105,13 @@ PointMotion* screen_push_point(RingMemPool* pool, const PointCmd* cmd) {
 
 LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t speed) {
     // Allocate object from the pool
+    speed = max(2, speed);
     LineMotion* motion = ring_get(pool, sizeof(LineMotion));
     if (!motion) {
         return NULL;
     }
     // Calculate length in millipoints
-    uint32_t length = sqrt(pow(cmd->x2 - cmd->x1, 2) + pow(cmd->y2 - cmd->y1, 2)) * 1000l;
+    float length = sqrtf(powf(cmd->x2 - cmd->x1, 2) + powf(cmd->y2 - cmd->y1, 2)) * 1000;
 
     // Populate motion
     motion->base.type = SM_Line;
@@ -125,8 +126,8 @@ LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t spe
     motion->my1 = 1000l*cmd->y1;
     motion->mx2 = 1000l*cmd->x2;
     motion->my2 = 1000l*cmd->y2;
-    motion->dx = (motion->mx2 - motion->mx1) * speed / length;
-    motion->dy = (motion->my2 - motion->my1) * speed / length;
+    motion->dx  = (motion->mx2 - motion->mx1) * speed / length;
+    motion->dy  = (motion->my2 - motion->my1) * speed / length;
 
     return motion;
 }

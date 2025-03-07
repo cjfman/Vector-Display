@@ -65,17 +65,17 @@ String commandToString(const Command* cmd) {
 }
 
 static inline void printPointMotion(const PointMotion* motion) {
-    Serial.print(String("PointMotion x: ") + motion->x + " y: " + motion->y);
+    Serial.write((String("PointMotion x: ") + motion->x + " y: " + motion->y).c_str());
 }
 
 static inline String printLineMotion(const LineMotion* motion) {
-    Serial.print("LineMotion ");
-    Serial.print(String(" x1: ") + motion->mx1 / 1000);
-    Serial.print(String(" y1: ") + motion->my1 / 1000);
-    Serial.print(String(" x2: ") + motion->mx2 / 1000);
-    Serial.print(String(" y2: ") + motion->my2 / 1000);
-    Serial.print(String(" dx: ") + motion->dx);
-    Serial.print(String(" dy: ") + motion->dy);
+    Serial.write("LineMotion ");
+    Serial.write((String(" x1: ") + motion->mx1 / 1000).c_str());
+    Serial.write((String(" y1: ") + motion->my1 / 1000).c_str());
+    Serial.write((String(" x2: ") + motion->mx2 / 1000).c_str());
+    Serial.write((String(" y2: ") + motion->my2 / 1000).c_str());
+    Serial.write((String(" dx: ") + motion->dx).c_str());
+    Serial.write((String(" dy: ") + motion->dy).c_str());
 }
 
 void serialPrintMotion(const ScreenMotion* motion) {
@@ -87,7 +87,7 @@ void serialPrintMotion(const ScreenMotion* motion) {
         printLineMotion((const LineMotion*) motion);
         break;
     default:
-        Serial.print(String("Unknown screen motion type ") + motion->type);
+        Serial.print((String("Unknown screen motion type ") + motion->type).c_str());
         break;
     }
 }
