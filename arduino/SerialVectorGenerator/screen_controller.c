@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define DEBUG false
-
 #include "ring_mem_pool.h"
 #include "screen_controller.h"
 #include "utils.h"
@@ -30,7 +28,7 @@ static inline bool line_completed(int32_t end, int32_t pos, bool direction) {
     return ((direction && pos > end) || (!direction && (pos < end)));
 }
 
-static inline bool calcLine(uint16_t elapsed, const LineMotion* motion, const ScreenState* screen, BeamState* beam) {
+static inline bool calcLine(uint16_t elapsed, const LineMotion* motion, BeamState* beam) {
     // Dert: Distance = Rate * time
 
     // Calculate movement in each dimention
@@ -63,7 +61,7 @@ static inline bool nextBeamState(uint16_t elapsed, const ScreenMotion* motion, S
         active = calcPoint(elapsed, (PointMotion*)motion, screen, &beam);
         break;
     case SM_Line:
-        active = calcLine(elapsed, (LineMotion*)motion, screen, &beam);
+        active = calcLine(elapsed, (LineMotion*)motion, &beam);
         break;
     default:
         active = false;
@@ -209,7 +207,7 @@ bool sequence_clear(ScreenState* screen) {
 }
 
 // Add to a sequence
-bool add_to_sequence(ScreenState* screen, const ScreenMotion* motion) {
+bool add_to_sequence(ScreenState* screen, ScreenMotion* motion) {
     if (!screen->sequence_enabled
         || screen->sequence_size >= SEQ_LEN
         || screen->sequence_idx >= 0

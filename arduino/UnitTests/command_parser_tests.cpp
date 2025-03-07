@@ -26,7 +26,7 @@ protected:
 
 TEST_F(CommandParserTest, scale) {
     // Send and parse command
-    const char cmd_str[] = "scale 44 87 -5 4";
+    const char cmd_str[] = "scale 44 87 1 0";
     this->build_command(cmd_str, sizeof(cmd_str));
     CommandUnion cmd;
     ASSERT_EQ(CMD_OK, cmdParse(&cmd, this->cmd_buf, CMD_BUF_SIZE))
@@ -35,10 +35,10 @@ TEST_F(CommandParserTest, scale) {
     // Check parsed command
     ASSERT_EQ(Cmd_Scale, cmd.base.type);
     ScaleCmd* scale_cmd = (ScaleCmd*)&cmd;
-    EXPECT_EQ(44u, scale_cmd->x_width);
-    EXPECT_EQ(87u, scale_cmd->y_width);
-    EXPECT_EQ(-5,  scale_cmd->x_offset);
-    EXPECT_EQ(4,   scale_cmd->y_offset);
+    EXPECT_EQ(44, scale_cmd->x_width);
+    EXPECT_EQ(87, scale_cmd->y_width);
+    EXPECT_TRUE(scale_cmd->x_centered);
+    EXPECT_FALSE(scale_cmd->y_centered);
 }
 
 TEST_F(CommandParserTest, point) {

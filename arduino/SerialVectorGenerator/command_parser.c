@@ -1,4 +1,4 @@
-#include <stdio.h> // XXX
+#include <ctype.h>
 
 #include <inttypes.h>
 #include <stdlib.h>

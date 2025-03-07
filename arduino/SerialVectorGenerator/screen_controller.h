@@ -70,6 +70,6 @@ bool update_screen(uint32_t time, ScreenState* screen, RingMemPool* pool);
 bool sequence_start(ScreenState* screen);
 bool sequence_end(ScreenState* screen);
 bool sequence_clear(ScreenState* screen);
-bool add_to_sequence(ScreenState* screen, const ScreenMotion* motion);
+bool add_to_sequence(ScreenState* screen, ScreenMotion* motion);
 
 #endif // SCREEN_CONTROLLER_HH
