@@ -4,78 +4,107 @@
 #include "screen_controller.h"
 
 static inline String printScaleCmd(const ScaleCmd* cmd) {
-    return String("scale x_width: ") + cmd->x_width
-        + " y_width: "  + cmd->y_width
-        + " x_centered: " + cmd->x_centered
-        + " y_centered: " + cmd->y_centered;
+    Serial.print("scale");
+    Serial.print(" x_width: ");
+    Serial.print(cmd->x_width);
+    Serial.print(" y_width: ");
+    Serial.print(cmd->y_width);
+    Serial.print(" x_centered: ");
+    Serial.print(cmd->x_centered);
+    Serial.print(" y_centered: ");
+    Serial.print(cmd->y_centered);
 }
 
-static inline String printPointCmd(const PointCmd* cmd) {
-    return String("point x: ") + cmd->x + " y: " + cmd->y;
+static inline void printPointCmd(const PointCmd* cmd) {
+    Serial.print("point x: ");
+    Serial.print(cmd->x);
+    Serial.print(" y: ");
+    Serial.print(cmd->y);
 }
 
-static inline String printLineCmd(const LineCmd* cmd) {
-    return String("line")
-        + " x1: " + cmd->x1
-        + " y1: " + cmd->y1
-        + " x2: " + cmd->x2
-        + " y2: " + cmd->y2;
+static inline void printLineCmd(const LineCmd* cmd) {
+    Serial.print("line");
+    Serial.print(" x1: ");
+    Serial.print(cmd->x1);
+    Serial.print(" y1: ");
+    Serial.print(cmd->y1);
+    Serial.print(" x2: ");
+    Serial.print(cmd->x2);
+    Serial.print(" y2: ");
+    Serial.print(cmd->y2);
 }
 
-static inline String printSpeedCmd(const SpeedCmd* cmd) {
-    return String("speed")
-        + " holdtime: " + cmd->hold_time
-        + " speed: " + cmd->speed;
+static inline void printSpeedCmd(const SpeedCmd* cmd) {
+    Serial.print("speed");
+    Serial.print(" holdtime: ");
+    Serial.print(cmd->hold_time);
+    Serial.print(" speed: ");
+    Serial.print(cmd->speed);
 }
 
-static inline String printSequenceCmd(const SequenceCmd* cmd) {
-    return String("sequence ") + cmd->base.args[0];
+static inline void printSequenceCmd(const SequenceCmd* cmd) {
+    Serial.print("sequence ");
+    Serial.print(cmd->base.args[0]);
 }
 
-static inline String printSetCmd(const SetCmd* cmd) {
-    if (cmd->set) {
-        return String("set ") + cmd->base.args[0];
-    }
-    else {
-        return String("unset ") + cmd->base.args[0];
-    }
+static inline void printSetCmd(const SetCmd* cmd) {
+    Serial.print((cmd->set) ? "set " : "unset ");
+    Serial.print(cmd->base.args[0]);
 }
 
-String commandToString(const Command* cmd) {
+void printCommand(const Command* cmd) {
     switch (cmd->type) {
     case Cmd_Scale:
-        return printScaleCmd((const ScaleCmd*) cmd);
+        printScaleCmd((const ScaleCmd*) cmd);
+        break;
     case Cmd_Point:
-        return printPointCmd((const PointCmd*) cmd);
+        printPointCmd((const PointCmd*) cmd);
+        break;
     case Cmd_Line:
-        return printLineCmd((const LineCmd*) cmd);
+        printLineCmd((const LineCmd*) cmd);
+        break;
     case Cmd_Speed:
     case Cmd_Hold:
-        return printSpeedCmd((const SpeedCmd*) cmd);
+        printSpeedCmd((const SpeedCmd*) cmd);
+        break;
     case Cmd_Sequence:
-        return printSequenceCmd((const SequenceCmd*) cmd);
+        printSequenceCmd((const SequenceCmd*) cmd);
+        break;
     case Cmd_Set:
     case Cmd_Unset:
-        return printSetCmd((const SetCmd*) cmd);
+        printSetCmd((const SetCmd*) cmd);
+        break;
     case Cmd_Noop:
-        return "noop";
+        Serial.print("noop");
+        break;
     default:
-        return String("Unknown command motion type ") + cmd->type;
+        Serial.print("Unknown command motion type ");
+        Serial.print(cmd->type);
+        break;
     }
 }
 
 static inline void printPointMotion(const PointMotion* motion) {
-    Serial.write((String("PointMotion x: ") + motion->x + " y: " + motion->y).c_str());
+    Serial.print("PointMotion x: ");
+    Serial.print(motion->x);
+    Serial.print(" y: ");
+    Serial.print(motion->y);
 }
 
 static inline String printLineMotion(const LineMotion* motion) {
     Serial.write("LineMotion ");
-    Serial.write((String(" x1: ") + motion->mx1 / 1000).c_str());
-    Serial.write((String(" y1: ") + motion->my1 / 1000).c_str());
-    Serial.write((String(" x2: ") + motion->mx2 / 1000).c_str());
-    Serial.write((String(" y2: ") + motion->my2 / 1000).c_str());
-    Serial.write((String(" dx: ") + motion->dx).c_str());
-    Serial.write((String(" dy: ") + motion->dy).c_str());
+    Serial.print(" x1: ");
+    Serial.print(motion->mx1 / 1000);
+    Serial.print(" y1: ");
+    Serial.print(motion->my1 / 1000);
+    Serial.print(" x2: ");
+    Serial.print(motion->mx2 / 1000);
+    Serial.print(" y2: ");
+    Serial.print(motion->my2 / 1000);
+    Serial.print(" dx: ");
+    Serial.print(motion->dx);
+    Serial.print(" dy: ");
+    Serial.print(motion->dy);
 }
 
 void serialPrintMotion(const ScreenMotion* motion) {
@@ -87,14 +116,15 @@ void serialPrintMotion(const ScreenMotion* motion) {
         printLineMotion((const LineMotion*) motion);
         break;
     default:
-        Serial.print((String("Unknown screen motion type ") + motion->type).c_str());
+        Serial.write((String("Unknown screen motion type ") + motion->type).c_str());
         break;
     }
 }
 
-String beamStateToString(const BeamState* state) {
-    return String("BeamState ")
-        + " x: " + state->x
-        + " y: " + state->y
-        + " active: " + state->a;
+void printBeamState(const BeamState* state) {
+    Serial.write((String("BeamState ")
+        + " x: "      + state->x
+        + " y: "      + state->y
+        + " active: " + state->a
+    ).c_str());
 }

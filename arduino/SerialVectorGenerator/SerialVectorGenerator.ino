@@ -109,9 +109,15 @@ void update_dac(const ScreenState* screen) {
     x = new_x;
     y = new_y;
     if (DEBUG) {
-        Serial.write("Updating screen:");
-        Serial.write((String(" x = ") + screen->beam.x + " -> 0x" + String(x, HEX)).c_str());
-        Serial.write((String(" y = ") + screen->beam.y + " -> 0y" + String(y, HEX)).c_str());
+        Serial.print("Updating screen:");
+        Serial.print(" x = ");
+        Serial.print(screen->beam.x);
+        Serial.print(" -> 0x");
+        Serial.print(x, HEX);
+        Serial.print(" y = ");
+        Serial.print(screen->beam.y);
+        Serial.print(" -> 0y");
+        Serial.print(y, HEX);
         Serial.write("\n");
     }
     dac_write2(x, y);
@@ -273,23 +279,24 @@ void checkForCommand(void) {
     }
 
     if (PROMPT) {
-        Serial.write((commandToString((Command*)&cmd) + "\n").c_str());
+        printCommand((Command*)&cmd);
+        Serial.print("\n");
         if (motion != NULL) {
-            Serial.write("New Motion: 0x");
-            Serial.write(String((size_t)(motion), HEX).c_str());
+            Serial.print("New Motion: 0x");
+            Serial.print((uint16_t)motion, HEX);
             if (DEBUG) {
                 Serial.write(" ");
                 serialPrintMotion(motion);
             }
-            Serial.write("\n");
+            Serial.print("\n");
         }
         else {
-            Serial.write((success) ? "OK\n" : "FAILED\n");
+            Serial.print((success) ? "OK\n" : "FAILED\n");
         }
         printPrompt();
     }
     else {
-        Serial.write((success || motion) ? "ACK\n" : "NAK\n");
+        Serial.print((success || motion) ? "ACK\n" : "NAK\n");
     }
 }
 
@@ -309,11 +316,17 @@ void loop() {
         if (debug_start < 0) debug_start = now;
         const ScreenMotion* next_motion = ring_peek(&motion_pool);
         if (memcmp(&beam_state, &main_screen.beam, sizeof(BeamState)) != 0) {
-            Serial.write("\n");
-            Serial.write((String("Screen update time ") + (after - now) + "us\n").c_str());
-            //Serial.write((String("Time: ") + (now / 1000.0) + "ms | ").c_str());
-            Serial.write(beamStateToString(&main_screen.beam).c_str());
-            Serial.write("\n");
+            Serial.print("\n");
+            Serial.print("Screen update time ");
+            Serial.print(after - now);
+            Serial.print("us\n");
+            /*
+            Serial.print("Time: ");
+            Serial.print(now / 1000.0);
+            Serial.print("ms | ");
+            //*/
+            printBeamState(&main_screen.beam);
+            Serial.print("\n");
             memcpy(&beam_state, &main_screen.beam, sizeof(BeamState));
             printed = true;
         }
@@ -325,7 +338,7 @@ void loop() {
             last_motion = next_motion;
             printed = true;
         }
-        */
+        //*/
 
         // Stop debug after 10 seconds
         if (now - debug_start > 10000000l) {
