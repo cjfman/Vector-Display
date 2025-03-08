@@ -266,6 +266,10 @@ void checkForCommand(void) {
             PROMPT = cmd.set.set;
             success = true;
         }
+        else if (strcmp(cmd.set.name, "repeat") == 0) {
+            main_screen.repeat = cmd.set.set;
+            success = true;
+        }
         break;
     case Cmd_Noop:
         success = true;

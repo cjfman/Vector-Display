@@ -15,6 +15,7 @@ typedef struct RingEntryHdr {
 } RingEntryHdr;
 
 typedef struct RingMemPool {
+    volatile uint8_t  count;
     volatile uint16_t size;
     volatile uint16_t head;
     volatile uint16_t tail;

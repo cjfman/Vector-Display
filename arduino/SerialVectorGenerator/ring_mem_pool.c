@@ -111,6 +111,7 @@ void* ring_get(RingMemPool* ring, uint8_t size) {
         return 0;
     }
 
+    ring->count++;
     ring->last_err = RING_OK;
     return start + sizeof(RingEntryHdr);
 }
@@ -158,6 +159,7 @@ uint8_t ring_pop(RingMemPool* ring) {
         }
     }
 
+    ring->count--;
     ring->last_err = RING_OK;
     return hdr->size;
 }

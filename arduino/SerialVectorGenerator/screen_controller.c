@@ -154,11 +154,11 @@ bool update_screen(uint32_t time, ScreenState* screen, RingMemPool* pool) {
             return true;
         }
         // Motion has completed
-        if (!screen->sequence_enabled) {
-            ring_pop(pool);
-        }
-        else {
+        if (screen->sequence_enabled) {
             screen->sequence_idx = (screen->sequence_idx + 1) % screen->sequence_size;
+        }
+        else if (!screen->repeat || pool->count > 1) {
+            ring_pop(pool);
         }
         screen->motion_active = 0;
     }

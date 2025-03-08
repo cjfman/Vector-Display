@@ -57,6 +57,7 @@ typedef struct ScreenState {
     uint32_t motion_start; // Time when current motion started
     BeamState beam;
     bool motion_active;
+    bool repeat;
     bool sequence_enabled;
     int8_t sequence_size;
     int8_t sequence_idx;
