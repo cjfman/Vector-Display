@@ -11,7 +11,6 @@
 #define RING_OUT_OF_MEM -2
 #define RING_CRITICAL -3
 typedef struct RingEntryHdr {
-    uint16_t idx;
     uint8_t size;
 } RingEntryHdr;
 

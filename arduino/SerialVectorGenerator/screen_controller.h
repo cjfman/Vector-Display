@@ -43,8 +43,8 @@ typedef struct LineMotion {
     int32_t my1;
     int32_t mx2;
     int32_t my2;
-    int32_t dx; // Points per microsecond
-    int32_t dy; // Points per microsecond
+    int16_t dx; // Millipoints per microsecond
+    int16_t dy; // Millipoints per microsecond
 } LineMotion;
 
 typedef struct ScreenState {
