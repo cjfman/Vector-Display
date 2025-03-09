@@ -67,7 +67,41 @@ TEST_F(ScreenControllerTest, lineFromOrigin) {
     EXPECT_EQ(0, motion->y1);
     EXPECT_EQ(3, motion->x2);
     EXPECT_EQ(4, motion->y2);
-//    EXPECT_EQ(5, motion->length);
+    EXPECT_EQ(0,    motion->mx1);
+    EXPECT_EQ(0,    motion->my1);
+    EXPECT_EQ(3000, motion->mx2);
+    EXPECT_EQ(4000, motion->my2);
+    EXPECT_EQ(6000, motion->dx);
+    EXPECT_EQ(8000, motion->dy);
+}
+
+TEST_F(ScreenControllerTest, longLineFromOrigin) {
+    // Create line command and push it to the screen
+    // 4-5-6 right triangle
+    LineCmd cmd = {
+        {},  // base
+        0,   // x1
+        0,   // y1
+        300, // x2
+        400, // y2
+    };
+    ASSERT_TRUE(screen_push_line(&this->pool, &cmd, this->screen.speed));
+
+    // Read motion from pool
+    LineMotion* motion = (LineMotion*)ring_peek(&this->pool);
+    ASSERT_EQ(RING_OK, this->pool.last_err);
+    ASSERT_EQ(sizeof(LineMotion), (unsigned)ring_pop(&this->pool));
+    ASSERT_EQ(SM_Line, motion->base.type);
+    EXPECT_EQ(0,   motion->x1);
+    EXPECT_EQ(0,   motion->y1);
+    EXPECT_EQ(300, motion->x2);
+    EXPECT_EQ(400, motion->y2);
+    EXPECT_EQ(0,      motion->mx1);
+    EXPECT_EQ(0,      motion->my1);
+    EXPECT_EQ(300000, motion->mx2);
+    EXPECT_EQ(400000, motion->my2);
+    EXPECT_EQ(6000, motion->dx);
+    EXPECT_EQ(8000, motion->dy);
 }
 
 TEST_F(ScreenControllerTest, lineThroughOrigin) {
@@ -268,6 +302,65 @@ TEST_F(ScreenControllerTest, updateScreenLineFromOrigin) {
     EXPECT_EQ(0,  this->screen.beam.a);
 }
 
+TEST_F(ScreenControllerTest, updateScreenLongLineFromOrigin) {
+    this->screen.x_size_pow = 11;
+    this->screen.y_size_pow = 11;
+    this->screen.x_centered = true;
+    this->screen.y_centered = true;
+    this->screen.speed      = 10;
+    LineCmd cmd = {
+        {},  // base
+        0,   // x1
+        0,   // y1
+        300, // x2
+        400, // y2
+    };
+    // Line length of 50
+    screen_push_line(&this->pool, &cmd, this->screen.speed);
+
+    // t = 0us; 0% of line
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1, this->screen.beam.a);
+    EXPECT_EQ(0, this->screen.beam.x);
+    EXPECT_EQ(0, this->screen.beam.y);
+
+    // t = 10ms; 20% of line
+    update_screen(10000, &this->screen, &this->pool);
+    EXPECT_EQ(1,  this->screen.beam.a);
+    EXPECT_EQ(60, this->screen.beam.x);
+    EXPECT_EQ(80, this->screen.beam.y);
+
+    // t = 20ms; 40% of line
+    update_screen(20000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(120, this->screen.beam.x);
+    EXPECT_EQ(160, this->screen.beam.y);
+
+    // t = 30ms; 60% of line
+    update_screen(30000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(180, this->screen.beam.x);
+    EXPECT_EQ(240, this->screen.beam.y);
+
+    // t = 40ms; 80% of line
+    update_screen(40000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(240, this->screen.beam.x);
+    EXPECT_EQ(320, this->screen.beam.y);
+
+    // t = 50ms; 100% of line
+    update_screen(50000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(300, this->screen.beam.x);
+    EXPECT_EQ(400, this->screen.beam.y);
+
+    // t > 50ms; >100% of line
+    update_screen(60000, &this->screen, &this->pool);
+    EXPECT_EQ(0,   this->screen.beam.a);
+    EXPECT_EQ(300, this->screen.beam.x);
+    EXPECT_EQ(400, this->screen.beam.y);
+}
+
 TEST_F(ScreenControllerTest, updateScreenLineCornerToCorner) {
     this->screen.x_size_pow = 9;
     this->screen.y_size_pow = 9;
@@ -322,6 +415,65 @@ TEST_F(ScreenControllerTest, updateScreenLineCornerToCorner) {
     // t > 5us; >100% of line
     update_screen(11, &this->screen, &this->pool);
     EXPECT_EQ(0,  this->screen.beam.a);
+}
+
+TEST_F(ScreenControllerTest, updateScreenLongLineCornerToCorner) {
+    this->screen.x_size_pow = 11;
+    this->screen.y_size_pow = 11;
+    this->screen.x_centered = true;
+    this->screen.y_centered = true;
+    this->screen.speed      = 10;
+    LineCmd cmd = {
+        {},   // base
+        -300, // x1
+        -400, // y1
+        300,  // x2
+        400,  // y2
+    };
+    // Line length of 50
+    screen_push_line(&this->pool, &cmd, this->screen.speed);
+
+    // t = 0ms; 0% of line
+    update_screen(0, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(-300, this->screen.beam.x);
+    EXPECT_EQ(-400, this->screen.beam.y);
+
+    // t = 20ms; 20% of line
+    update_screen(20000, &this->screen, &this->pool);
+    EXPECT_EQ(1,    this->screen.beam.a);
+    EXPECT_EQ(-180, this->screen.beam.x);
+    EXPECT_EQ(-240, this->screen.beam.y);
+
+    // t = 40ms; 40% of line
+    update_screen(40000, &this->screen, &this->pool);
+    EXPECT_EQ(1,    this->screen.beam.a);
+    EXPECT_EQ(-60, this->screen.beam.x);
+    EXPECT_EQ(-80, this->screen.beam.y);
+
+    // t = 60ms; 60% of line
+    update_screen(60000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(60, this->screen.beam.x);
+    EXPECT_EQ(80, this->screen.beam.y);
+
+    // t = 80ms; 80% of line
+    update_screen(80000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(180, this->screen.beam.x);
+    EXPECT_EQ(240, this->screen.beam.y);
+
+    // t = 100ms; 100% of line
+    update_screen(100000, &this->screen, &this->pool);
+    EXPECT_EQ(1,   this->screen.beam.a);
+    EXPECT_EQ(300, this->screen.beam.x);
+    EXPECT_EQ(400, this->screen.beam.y);
+
+    // t > 100ms; >100% of line
+    update_screen(110000, &this->screen, &this->pool);
+    EXPECT_EQ(0,   this->screen.beam.a);
+    EXPECT_EQ(300, this->screen.beam.x);
+    EXPECT_EQ(400, this->screen.beam.y);
 }
 
 TEST_F(ScreenControllerTest, emtpySequence) {
@@ -435,7 +587,7 @@ TEST(ScreenController, signedPositionTo16Bits) {
     EXPECT_EQ(0x0c7fu, position_to_binary(100,  10, 16, true));
     EXPECT_EQ(0x3e7fu, position_to_binary(500,  10, 16, true));
     EXPECT_EQ(0x7cdfu, position_to_binary(999,  10, 16, true));
-    EXPECT_EQ(0x7cffu, position_to_binary(1000, 10, 16, true));
+    EXPECT_EQ(0x7d1fu, position_to_binary(1001, 10, 16, true));
 }
 
 /*

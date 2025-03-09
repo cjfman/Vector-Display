@@ -7,7 +7,7 @@
 #include "screen_controller.h"
 #include "utils.h"
 
-static inline bool calcPoint(uint16_t elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
+static inline bool calcPoint(uint32_t elapsed, const PointMotion* motion, const ScreenState* screen, BeamState* beam) {
     beam->x = motion->x;
     beam->y = motion->y;
 #ifdef AVR
@@ -28,7 +28,7 @@ static inline bool line_completed(int32_t end, int32_t pos, bool direction) {
     return ((direction && pos > end) || (!direction && (pos < end)));
 }
 
-static inline bool calcLine(uint16_t elapsed, const LineMotion* motion, BeamState* beam) {
+static inline bool calcLine(uint32_t elapsed, const LineMotion* motion, BeamState* beam) {
     // Dert: Distance = Rate * time
 
     // Calculate movement in each dimention
@@ -53,7 +53,7 @@ static inline bool calcLine(uint16_t elapsed, const LineMotion* motion, BeamStat
     return (beam->a > 0);
 }
 
-static inline bool nextBeamState(uint16_t elapsed, const ScreenMotion* motion, ScreenState* screen) {
+static inline bool nextBeamState(uint32_t elapsed, const ScreenMotion* motion, ScreenState* screen) {
     BeamState beam;
     bool active;
     switch (motion->type) {
@@ -129,14 +129,14 @@ LineMotion* screen_push_line(RingMemPool* pool, const LineCmd* cmd, uint16_t spe
     motion->my1 = 1000l*cmd->y1;
     motion->mx2 = 1000l*cmd->x2;
     motion->my2 = 1000l*cmd->y2;
-    motion->dx  = (motion->mx2 - motion->mx1) * speed / length;
-    motion->dy  = (motion->my2 - motion->my1) * speed / length;
+    motion->dx  = (float)(motion->mx2 - motion->mx1) * speed / length;
+    motion->dy  = (float)(motion->my2 - motion->my1) * speed / length;
 
     return motion;
 }
 
 bool update_screen(uint32_t time, ScreenState* screen, RingMemPool* pool) {
-    int16_t elapsed = time - screen->motion_start;
+    int32_t elapsed = time - screen->motion_start;
 
     // Get the current motion
     ScreenMotion* motion = (!screen->sequence_enabled) ? ring_peek(pool)                        :
