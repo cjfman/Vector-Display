@@ -3,6 +3,7 @@
 
 bool PROMPT = true;
 bool DEBUG  = false;
+bool FAST   = false;
 
 extern "C" {
 #include "command_parser.h"
@@ -97,6 +98,27 @@ static inline void dac_write2(uint16_t x, uint16_t y) {
     digitalWrite(DAC_LDAC, HIGH);
 }
 
+static inline void dac_write_fast(uint16_t val) {
+    SPDR = val >> 8;
+    while (!(SPSR & (1 << SPIF)));
+    SPDR = val & 0xFF;
+    while (!(SPSR & (1 << SPIF)));
+}
+
+static inline void dac_write2_fast(uint16_t x, uint16_t y) {
+    // Write data
+    // X
+    digitalWrite(DAC_SYNC, LOW);
+    dac_write_fast(y);
+    dac_write_fast(x);
+    digitalWrite(DAC_SYNC, HIGH);
+
+    // Load data
+    digitalWrite(DAC_LDAC, LOW);
+    delayMicroseconds(1);
+    digitalWrite(DAC_LDAC, HIGH);
+}
+
 void update_dac(const ScreenState* screen) {
     static uint16_t x = 0;
     static uint16_t y = 0;
@@ -120,7 +142,12 @@ void update_dac(const ScreenState* screen) {
         Serial.print(y, HEX);
         Serial.write("\n");
     }
-    dac_write2(x, y);
+    if (FAST) {
+        dac_write2_fast(x, y);
+    }
+    else {
+        dac_write2(x, y);
+    }
 }
 
 void setup() {
@@ -138,6 +165,11 @@ void setup() {
 
     // Set up comms
     SPI.begin();
+    if (FAST) {
+        SPI.setBitOrder(MSBFIRST);
+        SPI.setClockDivider(SPI_CLOCK_DIV16);
+        SPI.setDataMode(SPI_MODE1);
+    }
     Serial.begin(BAUD);
     Serial.write("Vector Generator Command Terminal\n");
 
@@ -270,6 +302,12 @@ void checkForCommand(void) {
         else if (strcmp(cmd.set.name, "repeat") == 0) {
             main_screen.repeat = cmd.set.set;
             success = true;
+        }
+        else if (strcmp(cmd.set.name, "fast") == 0) {
+            FAST = 1;
+            SPI.setBitOrder(MSBFIRST);
+            SPI.setClockDivider(SPI_CLOCK_DIV16);
+            SPI.setDataMode(SPI_MODE1);
         }
         break;
     case Cmd_Noop:
