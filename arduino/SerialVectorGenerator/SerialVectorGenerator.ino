@@ -148,6 +148,7 @@ void setup() {
     main_screen.y_size_pow = 11;
     main_screen.x_centered = true;
     main_screen.y_centered = true;
+    main_screen.speed      = 50;
 
     // Print prompt
     if (PROMPT) printPrompt();
